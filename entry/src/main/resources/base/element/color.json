@@ -1,0 +1,12 @@
+{
+  "color": [
+    {
+      "name": "start_window_background",
+      "value": "#FFFFFF"
+    },
+    {
+      "name": "send_tab_file_name_background",
+      "value": "#E8E9E9"
+    }
+  ]
+}

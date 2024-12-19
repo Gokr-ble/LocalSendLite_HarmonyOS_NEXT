@@ -1,0 +1,32 @@
+{
+  "string": [
+    {
+      "name": "module_desc",
+      "value": "module description"
+    },
+    {
+      "name": "EntryAbility_desc",
+      "value": "description"
+    },
+    {
+      "name": "EntryAbility_label",
+      "value": "LocalSendLite"
+    },
+    {
+      "name": "title",
+      "value": "LocalSend"
+    },
+    {
+      "name": "RecvBarTitle",
+      "value": "Receive"
+    },
+    {
+      "name": "SendBarTitle",
+      "value": "Send"
+    },
+    {
+      "name": "SettingsBarTitle",
+      "value": "Settings"
+    }
+  ]
+}

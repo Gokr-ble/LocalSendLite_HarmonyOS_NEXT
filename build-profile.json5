@@ -1,0 +1,55 @@
+{
+  "app": {
+    "signingConfigs": [
+      {
+        "name": "default",
+        "type": "HarmonyOS",
+        "material": {
+          "certpath": "C:\\Users\\luans\\.ohos\\config\\default_LocalSendLite_8X7pDU-esCDcPtMR0d-v9RsvsLvz-KxwB8eZc1pBtBg=.cer",
+          "storePassword": "0000001A771A08F6809410B1930DB1AFF309D3BCD1486162744CC05E5C490F1DC1C5AB060368C22689C2",
+          "keyAlias": "debugKey",
+          "keyPassword": "0000001A6907C875458E09977B80AD0811B80CEF5070947F668B704661EE996266ED80B382B455FBA1D7",
+          "profile": "C:\\Users\\luans\\.ohos\\config\\default_LocalSendLite_8X7pDU-esCDcPtMR0d-v9RsvsLvz-KxwB8eZc1pBtBg=.p7b",
+          "signAlg": "SHA256withECDSA",
+          "storeFile": "C:\\Users\\luans\\.ohos\\config\\default_LocalSendLite_8X7pDU-esCDcPtMR0d-v9RsvsLvz-KxwB8eZc1pBtBg=.p12"
+        }
+      }
+    ],
+    "products": [
+      {
+        "name": "default",
+        "signingConfig": "default",
+        "compatibleSdkVersion": "5.0.1(13)",
+        "runtimeOS": "HarmonyOS",
+        "buildOption": {
+          "strictMode": {
+            "caseSensitiveCheck": true,
+            "useNormalizedOHMUrl": true
+          }
+        }
+      }
+    ],
+    "buildModeSet": [
+      {
+        "name": "debug",
+      },
+      {
+        "name": "release"
+      }
+    ]
+  },
+  "modules": [
+    {
+      "name": "entry",
+      "srcPath": "./entry",
+      "targets": [
+        {
+          "name": "default",
+          "applyToProducts": [
+            "default"
+          ]
+        }
+      ]
+    }
+  ]
+}
