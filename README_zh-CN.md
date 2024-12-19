@@ -14,3 +14,13 @@
 - [ ] 局域网设备自发现和广播
 - [ ] 服务器停止和重启功能
 - [ ] 更多响应码支持
+
+## 参考及使用的第三方库
+- [LocalSend Protocol](https://github.com/localsend/protocol)
+- [Polka for HarmonyOS Next](https://gitee.com/openharmony-tpc/openharmony_tpc_samples/tree/master/ohos_polka)
+- [Crypto-JS for HarmonyOS Next](https://gitee.com/openharmony-sig/crypto-js)
+- [OpenHarmony三方库中心仓](https://ohpm.openharmony.cn/#/cn/home)
+
+## 其他推荐项目
+- [LocalSend(Official)](https://github.com/localsend/localsend)
+- [ArkTS-X Version](https://github.com/azhu003/localsend-harmony)

@@ -14,3 +14,13 @@ A third party implementation of LocalSend protocol for HarmonyOS NEXT
 - [ ] Self-discovery and multicast in LAN
 - [ ] Stop and Restart Server
 - [ ] More Response Code Support
+
+## Reference & Support
+- [LocalSend Protocol](https://github.com/localsend/protocol)
+- [Polka for HarmonyOS Next](https://gitee.com/openharmony-tpc/openharmony_tpc_samples/tree/master/ohos_polka)
+- [Crypto-JS for HarmonyOS Next](https://gitee.com/openharmony-sig/crypto-js)
+- [OpenHarmony Third-Party Library Repository](https://ohpm.openharmony.cn/#/en/home)
+
+## Other Recommended Project
+- [LocalSend(Official)](https://github.com/localsend/localsend)
+- [ArkTS-X Version](https://github.com/azhu003/localsend-harmony)
