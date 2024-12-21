@@ -6,7 +6,7 @@ import { common } from '@kit.AbilityKit'
 import { BusinessError } from "@kit.BasicServicesKit";
 import { url } from "@kit.ArkTS";
 import { showToast } from "../utils/ToastUtil";
-import { DialogUtil, NetworkUtil, ToastUtil } from "@pura/harmony-utils";
+import { DialogUtil, LogUtil, NetworkUtil, ToastUtil } from "@pura/harmony-utils";
 
 interface FileInfoSaved {
   fileName: string,
@@ -26,7 +26,130 @@ let sessionId: string = ''
 let fileId: string = ''
 let fileToken: string = ''
 
+let storage: LocalStorage = new LocalStorage()
+storage.setOrCreate('serverHost', NetworkUtil.getIpAddress())
+storage.setOrCreate('serverPort', 53317)
+storage.setOrCreate('serverOn', true)
 
+@Component
+@Preview
+export struct ReceiveTab {
+
+  @State fileName: string = ''
+  // @LocalStorageLink('serverHost') serverHost: string = '0.0.0.0'
+  // @LocalStorageLink('serverPort') serverPort: number = 53317
+  // @LocalStorageLink('serverOn') serverOn: boolean = false
+
+  aboutToAppear(): void {
+    storage.setOrCreate('context', getContext(this) as common.Context)
+    startServer()
+  }
+
+  build() {
+    Column() {
+      Image($r("app.media.RecvPageLogo"))
+        .width('300vp')
+        .height('300vp')
+        .margin({ top: '24vp', bottom: '24vp'})
+
+      Column() {
+        Text('别名')
+          .fontSize('36vp')
+          .fontWeight('Bold')
+      }
+      .width('90%')
+      .alignItems(HorizontalAlign.Center)
+      .margin({ bottom: '16vp' })
+
+      Row() {
+        Text('主机IP')
+          // .margin({right: '8vp'})
+          .width('36%')
+          .textAlign(TextAlign.Start)
+        Text(`${storage.get('serverHost')}`)
+          .width('60%')
+          .height('36vp')
+          .textAlign(TextAlign.Start)
+          .backgroundColor($r('app.color.send_tab_file_name_background'))
+          .borderRadius($r('sys.float.corner_radius_level9'))
+          .padding({left: '8vp'})
+          // .margin({ left: '16vp', top: '8vp', right: '16vp'})
+      }
+      .width('90%')
+      .margin({ left: '16vp', top: '16vp', right: '16vp', bottom: '8vp'})
+
+      Row() {
+        Text('主机端口')
+          // .margin({ right: '8vp', bottom: '8vp' })
+          .width('36%')
+          .textAlign(TextAlign.Start)
+        Text(`${storage.get('serverPort')}`)
+          .width('60%')
+          .height('36vp')
+          // .margin({ left: '16vp', right: '16vp'})
+          .textAlign(TextAlign.Start)
+          .backgroundColor($r('app.color.send_tab_file_name_background'))
+          .borderRadius($r('sys.float.corner_radius_level9'))
+          .padding({left: '8vp'})
+      }
+      .width('90%')
+      .margin({ left: '16vp', top: '8vp', right: '16vp', bottom: '8vp'})
+
+      Row() {
+        Text('服务器状态')
+          // .margin({ right: '8vp', bottom: '8vp' })
+          .width('36%')
+          .height('36vp')
+          .textAlign(TextAlign.Start)
+        Toggle({ type: ToggleType.Switch, isOn: storage.get('serverOn')})
+          .onChange((isOn: boolean) => {
+            if (isOn) {
+              ToastUtil.showToast("Server (pretend) On")
+              startServer()
+            } else {
+              ToastUtil.showToast("Server (pretend) Off")
+              stopServer()
+            }
+          })
+        // Text(!this.serverOn ? 'Off' : 'On')
+        //   .width('15%')
+        //   .height('36vp')
+        //   .backgroundColor(!this.serverOn ? '#BDBDBD' : '#43A047')
+        //   .borderRadius($r('sys.float.corner_radius_level9'))
+        //   .padding({left: '8vp', right: '8vp'})
+        //   .textAlign(TextAlign.Center)
+      }
+      .width('90%')
+      .margin({ left: '16vp', top: '8vp', right: '16vp', bottom: '8vp'})
+    }
+    .width('100%')
+    .height('100%')
+  }
+}
+
+function startServer() {
+  app.listen(53317, _ => {
+    Logger.info("Listening on 53317 successfully")
+    storage.set('serverOn', true)
+    storage.set('serverHost', NetworkUtil.getIpAddress())
+  })
+
+  app.get('/api/localsend/v1/info', (req, res) => {
+    handleInfo(req, res)
+  })
+
+  app.post('/api/localsend/v2/prepare-upload', (req, res) => {
+    handlePreUpload(req, res)
+  })
+
+  app.post('/api/localsend/v2/upload', (req, res) => {
+    handleUpload(req, res, storage.get('context') as common.Context)
+  })
+}
+
+function stopServer() {
+  app.server?.stop()
+}
 
 function handleInfo(req: Request, res: ServerResponse) {
   res.writeHead(200, { 'Content-Type': 'application/json' })
@@ -69,20 +192,20 @@ function handlePreUpload(req: Request, res: ServerResponse) {
       let sender: string = body['info']['alias']
 
       DialogUtil.showPrimaryDialog({
-        title: `${sender} is sending files`,
-        message: `Receiving file below:\n${fileListStr.trim()}`,
+        title: `${sender} 发来以下文件：`,
+        message: `${fileListStr.trim()}`,
         primaryButton: {
-          value: 'Reject',
+          value: '拒绝',
           action: () => {
-            ToastUtil.showToast('Rejected')
+            ToastUtil.showToast('已拒绝')
             res.writeHead(403)
             res.end('Rejected')
           }
         },
         secondaryButton: {
-          value: 'Accept',
+          value: '接收',
           action: () => {
-            ToastUtil.showToast('Accept')
+            ToastUtil.showToast('已接受')
             sessionId = generateUUID()
             let resBody: PrepareUploadResult = {
               files: fileInfoMap,
@@ -90,6 +213,9 @@ function handlePreUpload(req: Request, res: ServerResponse) {
             }
             res.end(JSON.stringify(resBody))
           }
+        },
+        onWillDismiss: (dismissDialogAction: DismissDialogAction) => {
+            LogUtil.error(`onWillDismiss: ${JSON.stringify(dismissDialogAction)}`)
         }
       })
     }
@@ -153,116 +279,6 @@ function handleUpload(req: Request, res: ServerResponse, context: Context) {
     Logger.error(err)
     res.writeHead(500)
     res.end('Server Error')
-  }
-}
-
-@Component
-@Preview
-export struct ReceiveTab {
-
-  @State fileName: string = ''
-  @State serverHost: string = '0.0.0.0'
-  @State serverPort: number = 53317
-  @State serverOn: boolean = false
-
-  aboutToAppear(): void {
-
-    app.listen(53317, _ => {
-      Logger.info("Listening on 53317 successfully")
-      this.serverOn = true
-      this.serverHost = NetworkUtil.getIpAddress()
-    })
-
-    app.get('/api/localsend/v1/info', (req, res) => {
-      handleInfo(req, res)
-    })
-
-    app.post('/api/localsend/v2/prepare-upload', (req, res) => {
-      handlePreUpload(req, res)
-    })
-
-    app.post('/api/localsend/v2/upload', (req, res) => {
-      handleUpload(req, res, getContext(this) as common.Context)
-    })
-
-  }
-  build() {
-    Column() {
-      Image($r("app.media.RecvPageLogo"))
-        .width('300vp')
-        .height('300vp')
-        .margin({ top: '24vp', bottom: '24vp'})
-
-      Column() {
-        Text('别名')
-          .fontSize('36vp')
-          .fontWeight('Bold')
-      }
-      .width('90%')
-      .alignItems(HorizontalAlign.Center)
-      .margin({ bottom: '16vp' })
-
-      Row() {
-        Text('主机IP')
-          // .margin({right: '8vp'})
-          .width('36%')
-          .textAlign(TextAlign.Start)
-        Text(`${this.serverHost}`)
-          .width('60%')
-          .height('36vp')
-          .textAlign(TextAlign.Start)
-          .backgroundColor($r('app.color.send_tab_file_name_background'))
-          .borderRadius($r('sys.float.corner_radius_level9'))
-          .padding({left: '8vp'})
-          // .margin({ left: '16vp', top: '8vp', right: '16vp'})
-      }
-      .width('90%')
-      .margin({ left: '16vp', top: '16vp', right: '16vp', bottom: '8vp'})
-
-      Row() {
-        Text('主机端口')
-          // .margin({ right: '8vp', bottom: '8vp' })
-          .width('36%')
-          .textAlign(TextAlign.Start)
-        Text(`${this.serverPort}`)
-          .width('60%')
-          .height('36vp')
-          // .margin({ left: '16vp', right: '16vp'})
-          .textAlign(TextAlign.Start)
-          .backgroundColor($r('app.color.send_tab_file_name_background'))
-          .borderRadius($r('sys.float.corner_radius_level9'))
-          .padding({left: '8vp'})
-      }
-      .width('90%')
-      .margin({ left: '16vp', top: '8vp', right: '16vp', bottom: '8vp'})
-
-      Row() {
-        Text('服务器状态')
-          // .margin({ right: '8vp', bottom: '8vp' })
-          .width('36%')
-          .height('36vp')
-          .textAlign(TextAlign.Start)
-        Toggle({ type: ToggleType.Switch, isOn: this.serverOn})
-          .onChange((isOn: boolean) => {
-            if (isOn) {
-              ToastUtil.showToast("Server (pretend) On")
-            } else {
-              ToastUtil.showToast("Server (pretend) Off")
-            }
-          })
-        // Text(!this.serverOn ? 'Off' : 'On')
-        //   .width('15%')
-        //   .height('36vp')
-        //   .backgroundColor(!this.serverOn ? '#BDBDBD' : '#43A047')
-        //   .borderRadius($r('sys.float.corner_radius_level9'))
-        //   .padding({left: '8vp', right: '8vp'})
-        //   .textAlign(TextAlign.Center)
-      }
-      .width('90%')
-      .margin({ left: '16vp', top: '8vp', right: '16vp', bottom: '8vp'})
-    }
-    .width('100%')
-    .height('100%')
   }
 }
 
