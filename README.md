@@ -1,26 +1,26 @@
 # LocalSendLite_HarmonyOS_NEXT
-A third party implementation of LocalSend protocol for HarmonyOS NEXT
+为HarmonyOS NEXT开发的基于LocalSend协议的轻量版实现
 
-[简体中文](./README_zh-CN.md)
+[English](./README_en-US)
 ## Roadmap
-- [x] Send File & Send Page
-- [x] Receive File & Receive Page
-- [ ] Settings Page
-- [ ] HTTPS Support
-- [ ] Change Default Listening Port
-- [ ] Change Default Device Name
-- [ ] Issuing Self-Signed SSL/TLS Certificate(for https transport purpose)
-- [ ] More Transport Format Support(Folder, Paste, text, etc.)
-- [ ] Self-discovery and multicast in LAN
-- [ ] Stop and Restart Server
-- [ ] More Response Code Support
+- [x] 发送文件功能 & 发送页
+- [x] 接收文件功能 & 接收页
+- [x] 设置页
+- [ ] HTTPS支持
+- [ ] 修改默认监听端口
+- [ ] 修改默认设备名称
+- [ ] 签发（生成）SSL/TLS证书用于HTTPS传输
+- [ ] 更多传输格式支持(如文件夹、剪贴板、文本等)
+- [ ] 局域网设备自发现和广播
+- [ ] 服务器停止和重启功能
+- [ ] 更多响应码支持
 
-## Reference & Support
+## 参考及使用的第三方库
 - [LocalSend Protocol](https://github.com/localsend/protocol)
 - [Polka for HarmonyOS Next](https://gitee.com/openharmony-tpc/openharmony_tpc_samples/tree/master/ohos_polka)
 - [Crypto-JS for HarmonyOS Next](https://gitee.com/openharmony-sig/crypto-js)
-- [OpenHarmony Third-Party Library Repository](https://ohpm.openharmony.cn/#/en/home)
+- [OpenHarmony三方库中心仓](https://ohpm.openharmony.cn/#/cn/home)
 
-## Other Recommended Project
+## 其他推荐项目
 - [LocalSend(Official)](https://github.com/localsend/localsend)
 - [ArkTS-X Version](https://github.com/azhu003/localsend-harmony)

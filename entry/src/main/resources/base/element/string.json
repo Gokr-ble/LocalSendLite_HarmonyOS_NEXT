@@ -18,15 +18,23 @@
     },
     {
       "name": "RecvBarTitle",
-      "value": "Receive"
+      "value": "接收"
     },
     {
       "name": "SendBarTitle",
-      "value": "Send"
+      "value": "发送"
     },
     {
       "name": "SettingsBarTitle",
-      "value": "Settings"
+      "value": "设置"
+    },
+    {
+      "name": "server_status_on",
+      "value": "服务器开"
+    },
+    {
+      "name": "server_status_off",
+      "value": "服务器关"
     }
   ]
 }

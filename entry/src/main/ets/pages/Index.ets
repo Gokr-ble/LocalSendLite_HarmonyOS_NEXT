@@ -1,8 +1,10 @@
 import { ReceiveTab } from './ReceiveTab';
 import { SendTab } from './SendTab';
 import { SettingsTab } from './SettingsTab';
+import polka, { Polka, Request } from '@ohos/polka'
 
-@Entry
+
+@Entry()
 @Component
 @Preview
 struct Index {
@@ -44,7 +46,10 @@ struct Index {
         )
 
         TabContent() {
-          SettingsTab()
+          Scroll() {
+            SettingsTab()
+          }
+          .width('100%')
         }
         .tabBar(new SubTabBarStyle($r('app.string.SettingsBarTitle'))
           .indicator({ marginTop: '8vp' })
