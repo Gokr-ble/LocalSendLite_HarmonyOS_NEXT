@@ -24,3 +24,6 @@
 ## 其他推荐项目
 - [LocalSend(Official)](https://github.com/localsend/localsend)
 - [ArkTS-X Version](https://github.com/azhu003/localsend-harmony)
+
+## 截图
+![](Screenshots/Total.png)

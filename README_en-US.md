@@ -24,3 +24,6 @@ A third party implementation of LocalSend protocol for HarmonyOS NEXT
 ## Other Recommended Project
 - [LocalSend(Official)](https://github.com/localsend/localsend)
 - [ArkTS-X Version](https://github.com/azhu003/localsend-harmony)
+
+## Screenshot
+![](Screenshots/Total.png)
