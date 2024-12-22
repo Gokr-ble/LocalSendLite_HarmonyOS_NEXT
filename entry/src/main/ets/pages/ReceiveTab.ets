@@ -7,6 +7,9 @@ import { BusinessError } from "@kit.BasicServicesKit";
 import { url } from "@kit.ArkTS";
 import { showToast } from "../utils/ToastUtil";
 import { DialogUtil, LogUtil, NetworkUtil, ToastUtil } from "@pura/harmony-utils";
+import { preferences } from "@kit.ArkData";
+
+let dataPreferences = preferences.getPreferencesSync(getContext(), { name: 'config.db' });
 
 interface FileInfoSaved {
   fileName: string,
@@ -28,7 +31,8 @@ let fileToken: string = ''
 
 let storage: LocalStorage = new LocalStorage()
 storage.setOrCreate('serverHost', NetworkUtil.getIpAddress())
-storage.setOrCreate('serverPort', 53317)
+storage.setOrCreate('alias', dataPreferences.getSync('alias', 'default') as string)
+// storage.setOrCreate('serverPort', 53317) // 移至startServer()
 storage.setOrCreate('serverOn', true)
 
 @Component
@@ -53,7 +57,7 @@ export struct ReceiveTab {
         .margin({ top: '24vp', bottom: '24vp'})
 
       Column() {
-        Text('别名')
+        Text(`${storage.get('alias')}`)
           .fontSize('36vp')
           .fontWeight('Bold')
       }
@@ -128,8 +132,19 @@ export struct ReceiveTab {
 }
 
 function startServer() {
-  app.listen(53317, _ => {
-    Logger.info("Listening on 53317 successfully")
+  dataPreferences.putSync('showRestartServerHind', false)
+
+  let port = dataPreferences.getSync('serverPort', 'default') as number
+
+  if (port < 10000) {
+    ToastUtil.showToast('请选择大于10000的端口号')
+    return
+  }
+
+  storage.setOrCreate('serverPort', port)
+
+  app.listen(port, _ => {
+    Logger.info(`Listening on ${port} successfully`)
     storage.set('serverOn', true)
     storage.set('serverHost', NetworkUtil.getIpAddress())
   })
@@ -154,13 +169,13 @@ function stopServer() {
 function handleInfo(req: Request, res: ServerResponse) {
   res.writeHead(200, { 'Content-Type': 'application/json' })
   let info = JSON.stringify({
-    "alias": "Mate 70 Pro+",
+    "alias": dataPreferences.getSync('alias', 'default') as string,
     "version": "2.1",
-    "deviceModel": "Huawei",
-    "deviceType": "mobile",
+    "deviceModel": dataPreferences.getSync('deviceModel', 'default') as string,
+    "deviceType": dataPreferences.getSync('deviceType', 'default') as string,
     "fingerprint": CryptoJS.SHA256("deviceInfo.serial"),
-    "port": 53317,
-    "protocol": "http",
+    "port": dataPreferences.getSync('serverPort', 'default') as number,
+    "protocol": dataPreferences.getSync('encryptOn', 'default') as boolean ? 'https' : 'http',
     "download": false
   })
   res.end(info)

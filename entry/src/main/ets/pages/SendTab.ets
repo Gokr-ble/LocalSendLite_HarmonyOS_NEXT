@@ -6,6 +6,9 @@ import Logger from '../utils/Logger'
 import { showToast } from '../utils/ToastUtil'
 import { CryptoJS } from '@ohos/crypto-js'
 import { DeviceUtil, FileUtil } from '@pura/harmony-utils'
+import { preferences } from '@kit.ArkData'
+
+let dataPreferences = preferences.getPreferencesSync(getContext(), { name: 'config.db' });
 
 @Component
 @Preview
@@ -113,15 +116,21 @@ export struct SendTab {
               files: Record<string, File>;
             }
 
+            let alias = dataPreferences.getSync('alias', 'default') as string
+            let model = dataPreferences.getSync('deviceModel', 'default') as string
+            let type = dataPreferences.getSync('deviceType', 'default') as string
+            let proto = dataPreferences.getSync('encryptOn', 'default') as boolean ? 'https' : 'http'
+            let port = dataPreferences.getSync('serverPort', 'default') as number
+
             let fileMetaData: IFileMetaData = {
               info: {
-                alias: "Mate70 Pro+",
+                alias: alias,
                 version: "2.1",
-                deviceModel: "Huawei",
-                deviceType: "mobile",
+                deviceModel: model,
+                deviceType: 'mobile',
                 fingerprint: CryptoJS.SHA256(deviceId).toString(CryptoJS.enc.Utf8),
-                port: 53317,
-                protocol: "http",
+                port: port,
+                protocol: proto,
                 download: false
               },
               files: {}
