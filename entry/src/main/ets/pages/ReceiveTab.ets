@@ -1,11 +1,9 @@
-import Logger from "../utils/Logger";
 import polka, { IncomingMessage, Request, ServerResponse } from '@ohos/polka'
 import { CryptoJS } from '@ohos/crypto-js'
 import { picker, fileIo as fs, Environment, fileUri } from '@kit.CoreFileKit'
 import { common } from '@kit.AbilityKit'
 import { BusinessError } from "@kit.BasicServicesKit";
 import { url } from "@kit.ArkTS";
-import { showToast } from "../utils/ToastUtil";
 import { DialogUtil, LogUtil, NetworkUtil, ToastUtil } from "@pura/harmony-utils";
 import { preferences } from "@kit.ArkData";
 
@@ -144,12 +142,12 @@ function startServer() {
   storage.setOrCreate('serverPort', port)
 
   app.listen(port, _ => {
-    Logger.info(`Listening on ${port} successfully`)
+    LogUtil.info(`Listening on ${port} successfully`)
     storage.set('serverOn', true)
     storage.set('serverHost', NetworkUtil.getIpAddress())
   })
 
-  app.get('/api/localsend/v1/info', (req, res) => {
+  app.get('/api/localsend/v2/info', (req, res) => {
     handleInfo(req, res)
   })
 
@@ -167,18 +165,24 @@ function stopServer() {
 }
 
 function handleInfo(req: Request, res: ServerResponse) {
-  res.writeHead(200, { 'Content-Type': 'application/json' })
-  let info = JSON.stringify({
-    "alias": dataPreferences.getSync('alias', 'default') as string,
-    "version": "2.1",
-    "deviceModel": dataPreferences.getSync('deviceModel', 'default') as string,
-    "deviceType": dataPreferences.getSync('deviceType', 'default') as string,
-    "fingerprint": CryptoJS.SHA256("deviceInfo.serial"),
-    "port": dataPreferences.getSync('serverPort', 'default') as number,
-    "protocol": dataPreferences.getSync('encryptOn', 'default') as boolean ? 'https' : 'http',
-    "download": false
-  })
-  res.end(info)
+  try {
+    res.writeHead(200, { 'Content-Type': 'application/json' })
+    let info = JSON.stringify({
+      "alias": dataPreferences.getSync('alias', 'default') as string,
+      "version": "2.1",
+      "deviceModel": dataPreferences.getSync('deviceModel', 'default') as string,
+      "deviceType": dataPreferences.getSync('deviceType', 'default') as string,
+      "fingerprint": CryptoJS.SHA256("deviceInfo.serial").toString(),
+      "port": dataPreferences.getSync('serverPort', 'default') as number,
+      "protocol": dataPreferences.getSync('encryptOn', 'default') as boolean ? 'https' : 'http',
+      "download": false
+    })
+    res.end(info)
+  } catch (err) {
+    LogUtil.error(err)
+    res.writeHead(500)
+    res.end('Server Error')
+  }
 }
 
 function handlePreUpload(req: Request, res: ServerResponse) {
@@ -203,7 +207,7 @@ function handlePreUpload(req: Request, res: ServerResponse) {
         fileInfo.set(id, tmp)
       })
 
-      // add user decision
+      // 弹窗使用户决定是否接收
       let sender: string = body['info']['alias']
 
       DialogUtil.showPrimaryDialog({
@@ -235,7 +239,7 @@ function handlePreUpload(req: Request, res: ServerResponse) {
       })
     }
   } catch (err) {
-    Logger.error(err)
+    LogUtil.error(err)
     res.writeHead(500)
     res.end('Server Error')
   }
@@ -273,17 +277,17 @@ function handleUpload(req: Request, res: ServerResponse, context: Context) {
             //   uri.concat(`/${fileInfo.get(recvFileId)!!.fileName}`)
             // }
 
-            Logger.info(`[*] save succeed, uri: ${uri}`)
+            LogUtil.info(`[*] save succeed, uri: ${uri}`)
 
             let outputFile = fs.openSync(path, fs.OpenMode.READ_WRITE | fs.OpenMode.CREATE)
             let writeLen = fs.writeSync(outputFile.fd, postData!!.buffer)
-            Logger.info(`[*] write ${writeLen} bytes`)
+            LogUtil.info(`[*] write ${writeLen} bytes`)
 
-            showToast(`saved ${fileInfo.size} files`)
+            ToastUtil.showToast(`saved ${fileInfo.size} files`)
 
             res.end('{}')
           }).catch((err: BusinessError) => {
-            Logger.error(`[*] save failed, code: ${err.code}, message: ${err.message}`)
+            LogUtil.error(`[*] save failed, code: ${err.code}, message: ${err.message}`)
             res.writeHead(500)
             res.end('Server Error')
           })
@@ -291,7 +295,7 @@ function handleUpload(req: Request, res: ServerResponse, context: Context) {
       }
     }
   } catch (err) {
-    Logger.error(err)
+    LogUtil.error(err)
     res.writeHead(500)
     res.end('Server Error')
   }

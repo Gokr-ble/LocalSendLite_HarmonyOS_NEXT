@@ -1,5 +1,6 @@
 # LocalSendLite_HarmonyOS_NEXT
 A third party implementation of LocalSend protocol for HarmonyOS NEXT
+Only support HTTP for now, please disable encryption
 
 [简体中文](./README)
 ## Roadmap

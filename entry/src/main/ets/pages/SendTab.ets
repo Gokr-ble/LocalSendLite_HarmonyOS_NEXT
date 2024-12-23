@@ -2,10 +2,8 @@ import { rcp } from '@kit.RemoteCommunicationKit'
 import { BusinessError } from '@kit.BasicServicesKit'
 import { readFile } from '../utils/ReadFile'
 import { fileIo } from '@kit.CoreFileKit'
-import Logger from '../utils/Logger'
-import { showToast } from '../utils/ToastUtil'
 import { CryptoJS } from '@ohos/crypto-js'
-import { DeviceUtil, FileUtil } from '@pura/harmony-utils'
+import { DeviceUtil, FileUtil, LogUtil, ToastUtil } from '@pura/harmony-utils'
 import { preferences } from '@kit.ArkData'
 
 let dataPreferences = preferences.getPreferencesSync(getContext(), { name: 'config.db' });
@@ -77,8 +75,8 @@ export struct SendTab {
             try {
               await testRcp.fetch(testRequest)
             } catch (e) {
-              Logger.error(`${this.receiverIP} is not reachable, err: ${e}`)
-              showToast(`${this.receiverIP} is not reachable`)
+              LogUtil.error(`${this.receiverIP} is not reachable, err: ${e}`)
+              ToastUtil.showToast(`${this.receiverIP} is not reachable`)
               return
             } finally {
               testRcp.close()
@@ -149,7 +147,7 @@ export struct SendTab {
             const preUploadSession = rcp.createSession({headers: header})
             preUploadSession.post(`http://${this.receiverIP}:53317/api/localsend/v2/prepare-upload`, JSON.stringify(fileMetaData)).then((response) => {
               if (response.statusCode == 200) {
-                Logger.info(`pre-upload succeed: [${response.statusCode}] ${response.reasonPhrase}`)
+                LogUtil.info(`pre-upload succeed: [${response.statusCode}] ${response.reasonPhrase}`)
 
                 let responseJson = response.toJSON()
                 if (responseJson != null) {
@@ -163,11 +161,11 @@ export struct SendTab {
                     if (readBytes > 0) {
                       uploadSession.post(`http://${this.receiverIP}:53317/api/localsend/v2/upload?sessionId=${sessionId}&fileId=${fileId}&token=${fileToken}`, readBuff).then((response) => {
                         if (response.statusCode == 200) {
-                          Logger.info(`upload succeed: [${response.statusCode}] ${response.reasonPhrase}`)
-                          showToast("upload complete")
+                          LogUtil.info(`upload succeed: [${response.statusCode}] ${response.reasonPhrase}`)
+                          ToastUtil.showToast("upload complete")
                         } else {
-                          Logger.info(`upload failed: [${response.statusCode}] ${response.reasonPhrase}`)
-                          showToast("upload failed")
+                          LogUtil.info(`upload failed: [${response.statusCode}] ${response.reasonPhrase}`)
+                          ToastUtil.showToast("upload failed")
                         }
                       })
                     }
@@ -175,18 +173,18 @@ export struct SendTab {
                 }
 
               } else {
-                showToast(`[${response.statusCode}] ${response.reasonPhrase}`)
-                Logger.info(`pre-upload failed: [${response.statusCode}] ${response.reasonPhrase}`)
+                ToastUtil.showToast(`[${response.statusCode}] ${response.reasonPhrase}`)
+                LogUtil.info(`pre-upload failed: [${response.statusCode}] ${response.reasonPhrase}`)
               }
             }).catch((err: BusinessError) => {
-              Logger.error(`pre-upload BusinessError: ${JSON.stringify(err)}`)
+              LogUtil.error(`pre-upload BusinessError: ${JSON.stringify(err)}`)
             })
           } else {
             if (this.fileUri == '') {
-              showToast("Please select file first")
+              ToastUtil.showToast("Please select file first")
             }
             if (this.receiverIP == '') {
-              showToast("Please input receiver IP")
+              ToastUtil.showToast("Please input receiver IP")
             }
           }
 

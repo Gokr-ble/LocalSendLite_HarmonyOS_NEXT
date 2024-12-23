@@ -1,5 +1,6 @@
 # LocalSendLite_HarmonyOS_NEXT
 为HarmonyOS NEXT开发的基于LocalSend协议的轻量版实现
+当前仅支持HTTP协议，请关闭加密功能
 
 [English](./README_en-US)
 ## Roadmap
