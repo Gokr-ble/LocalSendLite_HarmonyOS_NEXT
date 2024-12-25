@@ -5,6 +5,7 @@ import { fileIo } from '@kit.CoreFileKit'
 import { CryptoJS } from '@ohos/crypto-js'
 import { DeviceUtil, FileUtil, LogUtil, ToastUtil } from '@pura/harmony-utils'
 import { preferences } from '@kit.ArkData'
+import { DialogHelper, SpinType } from '@pura/harmony-dialog'
 
 let dataPreferences = preferences.getPreferencesSync(getContext(), { name: 'config.db' });
 
@@ -81,6 +82,18 @@ export struct SendTab {
             } finally {
               testRcp.close()
             }
+
+            // 开启加载弹窗
+            let dialogId = DialogHelper.showLoadingDialog({
+              loadType: SpinType.spinP,
+              loadColor: Color.White,
+              loadSize: 70,
+              backgroundColor: '#BB000000',
+              content: "传输中……",
+              fontSize: 18,
+              padding: { top: 30, right: 50, bottom: 30, left: 50},
+              autoCancel: false
+            })
 
             // Read File Info
             let file = fileIo.openSync(this.fileUri, fileIo.OpenMode.READ_ONLY)
@@ -162,16 +175,15 @@ export struct SendTab {
                       uploadSession.post(`http://${this.receiverIP}:53317/api/localsend/v2/upload?sessionId=${sessionId}&fileId=${fileId}&token=${fileToken}`, readBuff).then((response) => {
                         if (response.statusCode == 200) {
                           LogUtil.info(`upload succeed: [${response.statusCode}] ${response.reasonPhrase}`)
-                          ToastUtil.showToast("upload complete")
+                          ToastUtil.showToast("上传完成")
                         } else {
                           LogUtil.info(`upload failed: [${response.statusCode}] ${response.reasonPhrase}`)
-                          ToastUtil.showToast("upload failed")
+                          ToastUtil.showToast("上传失败")
                         }
                       })
                     }
                   }
                 }
-
               } else {
                 ToastUtil.showToast(`[${response.statusCode}] ${response.reasonPhrase}`)
                 LogUtil.info(`pre-upload failed: [${response.statusCode}] ${response.reasonPhrase}`)
@@ -179,6 +191,7 @@ export struct SendTab {
             }).catch((err: BusinessError) => {
               LogUtil.error(`pre-upload BusinessError: ${JSON.stringify(err)}`)
             })
+            DialogHelper.closeDialog(dialogId)
           } else {
             if (this.fileUri == '') {
               ToastUtil.showToast("Please select file first")
@@ -187,7 +200,6 @@ export struct SendTab {
               ToastUtil.showToast("Please input receiver IP")
             }
           }
-
         })
 
       Text('请确保目标连接的是同一个Wi-Fi网络')

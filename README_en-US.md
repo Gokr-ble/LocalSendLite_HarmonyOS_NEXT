@@ -18,6 +18,7 @@ Only support HTTP for now, please disable encryption
 - [LocalSend Protocol](https://github.com/localsend/protocol)
 - [Polka for HarmonyOS Next](https://ohpm.openharmony.cn/#/cn/detail/@ohos%2Fpolka)
 - [harmony-utils](https://ohpm.openharmony.cn/#/cn/detail/@pura%2Fharmony-utils)
+- [harmony-dialog](https://ohpm.openharmony.cn/#/cn/detail/@pura%2Fharmony-dialog)
 - [Crypto-JS for HarmonyOS Next](https://gitee.com/openharmony-sig/crypto-js)
 - [OpenHarmony Third-Party Library Repository](https://ohpm.openharmony.cn/#/en/home)
 

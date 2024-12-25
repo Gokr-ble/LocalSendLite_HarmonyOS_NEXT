@@ -4,7 +4,8 @@
   "dependencies": {
     "@ohos/crypto-js": "^2.0.4",
     "@ohos/polka": "^1.0.1",
-    "@pura/harmony-utils": "^1.2.5"
+    "@pura/harmony-utils": "^1.2.5",
+    "@pura/harmony-dialog": "^1.0.9"
   },
   "devDependencies": {
     "@ohos/hypium": "1.0.19",
