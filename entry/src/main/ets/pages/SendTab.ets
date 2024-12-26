@@ -90,7 +90,7 @@ export struct SendTab {
               loadSize: 70,
               backgroundColor: '#BB000000',
               content: "传输中……",
-              fontSize: 18,
+              fontSize: 16,
               padding: { top: 30, right: 50, bottom: 30, left: 50},
               autoCancel: false
             })
@@ -176,9 +176,11 @@ export struct SendTab {
                         if (response.statusCode == 200) {
                           LogUtil.info(`upload succeed: [${response.statusCode}] ${response.reasonPhrase}`)
                           ToastUtil.showToast("上传完成")
+                          DialogHelper.closeDialog(dialogId)
                         } else {
                           LogUtil.info(`upload failed: [${response.statusCode}] ${response.reasonPhrase}`)
                           ToastUtil.showToast("上传失败")
+                          DialogHelper.closeDialog(dialogId)
                         }
                       })
                     }
@@ -191,7 +193,7 @@ export struct SendTab {
             }).catch((err: BusinessError) => {
               LogUtil.error(`pre-upload BusinessError: ${JSON.stringify(err)}`)
             })
-            DialogHelper.closeDialog(dialogId)
+
           } else {
             if (this.fileUri == '') {
               ToastUtil.showToast("Please select file first")

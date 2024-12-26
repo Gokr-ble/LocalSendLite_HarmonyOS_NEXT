@@ -2,13 +2,16 @@ import { AbilityConstant, ConfigurationConstant, UIAbility, Want } from '@kit.Ab
 import { hilog } from '@kit.PerformanceAnalysisKit';
 import { window } from '@kit.ArkUI';
 import { AppUtil, LogUtil } from '@pura/harmony-utils';
+import { DialogHelper, Orientation } from '@pura/harmony-dialog';
 
 export default class EntryAbility extends UIAbility {
   onCreate(want: Want, launchParam: AbilityConstant.LaunchParam): void {
     this.context.getApplicationContext().setColorMode(ConfigurationConstant.ColorMode.COLOR_MODE_NOT_SET);
     AppUtil.init(this.context)
-    LogUtil.init(0x1010, 'LocalSend', true)
-    LogUtil.setDomain(0x0010)
+    LogUtil.init(0x1010, 'LocalSendLog', true)
+    DialogHelper.setDefaultConfig((config) => {
+      config.uiAbilityContext = this.context;
+    })
     hilog.info(0x0000, 'testTag', '%{public}s', 'Ability onCreate');
   }
 
