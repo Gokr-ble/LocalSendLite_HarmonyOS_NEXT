@@ -16,7 +16,7 @@ struct Index {
   aboutToAppear() {
     // 检查是否包含参数配置
     if (!dataPreferences.hasSync('alias')) {
-      dataPreferences.putSync('alias', DeviceUtil.getDeviceId())
+      dataPreferences.putSync('alias', DeviceUtil.getDeviceId().split('-')[0])
     }
     if (!dataPreferences.hasSync('deviceType')) {
       dataPreferences.putSync('deviceType', 'mobile')
@@ -46,6 +46,9 @@ struct Index {
         LogUtil.info('Preferences flush() successfully')
       }
     })
+    // 初始化AppStorage
+    AppStorage.setOrCreate('serverOn', true)
+    AppStorage.setOrCreate('serverAlias', dataPreferences.getSync('alias', 'Default') as string)
   }
 
   build() {

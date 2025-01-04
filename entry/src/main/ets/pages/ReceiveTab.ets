@@ -4,12 +4,12 @@ import { picker, fileIo as fs, Environment, fileUri, ReadOptions, WriteOptions }
 import { common } from '@kit.AbilityKit'
 import { BusinessError } from "@kit.BasicServicesKit";
 import { url } from "@kit.ArkTS";
-import { DialogUtil, FileUtil, LogUtil, NetworkUtil, ToastUtil } from "@pura/harmony-utils";
+import { DialogUtil, FileUtil, LogUtil, NetworkUtil, RandomUtil, ToastUtil } from "@pura/harmony-utils";
 import { preferences } from "@kit.ArkData";
-import File from '@system.file';
 import { DialogHelper, SpinType } from '@pura/harmony-dialog';
 
 let dataPreferences = preferences.getPreferencesSync(getContext(), { name: 'config.db' });
+let registeredDeviceList: Array<RegisteredDevice> = []
 
 interface FileInfoSaved {
   fileName: string,
@@ -22,14 +22,26 @@ interface PrepareUploadResult {
   sessionId: string;
 }
 
+interface RegisteredDevice {
+  ip: string
+  alias: string
+  version: string
+  deviceModel: string
+  deviceType: string
+  fingerprint: string
+  port: number
+  protocol: string
+  download: boolean
+}
+
 const app = polka()
 const fileInfo: Map<string, FileInfoSaved> = new Map()
 let sessionId: string = ''
 let savingDialogId: string = ''
 
-let storage: LocalStorage = new LocalStorage()
-storage.setOrCreate('alias', dataPreferences.getSync('alias', 'default') as string)
-storage.setOrCreate('serverOn', true)
+// let storage: LocalStorage = new LocalStorage()
+// storage.setOrCreate('alias', dataPreferences.getSync('alias', 'default') as string)
+// storage.setOrCreate('serverOn', true)
 
 @Component
 @Preview
@@ -38,13 +50,14 @@ export struct ReceiveTab {
   @State fileName: string = ''
   @State angle: number = 0
   @State serverHost: string = '0.0.0.0'
-  // @LocalStorageLink('serverHost') serverHost: string = '0.0.0.0'
-  // @LocalStorageLink('serverPort') serverPort: number = 53317
-  // @LocalStorageLink('serverOn') serverOn: boolean = false
+
+  @StorageLink('serverOn') serverOn: boolean = false
+  @StorageLink('serverAlias') alias: string = 'Default'
+
 
   aboutToAppear(): void {
     this.serverHost = NetworkUtil.getIpAddress()
-    storage.setOrCreate('context', getContext(this) as common.Context)
+    AppStorage.setOrCreate('context', getContext(this) as common.Context)
     startServer()
     // 注册网络状态变化回调
     NetworkUtil.register((netHandle) => {
@@ -83,7 +96,7 @@ export struct ReceiveTab {
         })
 
       Column() {
-        Text(`${storage.get('alias')}`)
+        Text(`${this.alias}`)
           .fontSize('36vp')
           .fontWeight('Bold')
       }
@@ -113,7 +126,7 @@ export struct ReceiveTab {
           // .margin({ right: '8vp', bottom: '8vp' })
           .width('36%')
           .textAlign(TextAlign.Start)
-        Text(`${storage.get('serverPort')}`)
+        Text(`${AppStorage.get('serverPort')}`)
           .width('60%')
           .height('36vp')
           // .margin({ left: '16vp', right: '16vp'})
@@ -131,7 +144,7 @@ export struct ReceiveTab {
           .width('36%')
           .height('36vp')
           .textAlign(TextAlign.Start)
-        Toggle({ type: ToggleType.Switch, isOn: storage.get('serverOn')})
+        Toggle({ type: ToggleType.Switch, isOn: this.serverOn})
           .onChange((isOn: boolean) => {
             if (isOn) {
               ToastUtil.showToast("Server (pretend) On")
@@ -167,12 +180,12 @@ function startServer() {
     return
   }
 
-  storage.setOrCreate('serverPort', port)
+  AppStorage.setOrCreate('serverPort', port)
 
   app.listen(port, _ => {
     LogUtil.info(`Listening on ${port} successfully`)
-    storage.set('serverOn', true)
-    storage.set('serverHost', NetworkUtil.getIpAddress())
+    AppStorage.set('serverOn', true)
+    AppStorage.set('serverHost', NetworkUtil.getIpAddress())
   })
 
   app.get('/api/localsend/v1/info', (req, res) => {
@@ -188,7 +201,11 @@ function startServer() {
   })
 
   app.post('/api/localsend/v2/upload', (req, res) => {
-    handleUpload(req, res, storage.get('context') as common.Context)
+    handleUpload(req, res, AppStorage.get('context') as common.Context)
+  })
+
+  app.post('/api/localsend/v2/register', (req, res) => {
+    handleRegister(req, res)
   })
 }
 
@@ -230,7 +247,7 @@ function handlePreUpload(req: Request, res: ServerResponse) {
       let fileListStr = ''
       let fileTotalSize = 0
       fileIds.forEach(id => {
-        let token = generateUUID()
+        let token = RandomUtil.generateUUID32()
         fileInfoMap[id] = token
         let tmp: FileInfoSaved = {
           fileName: body['files'][id]['fileName'],
@@ -260,7 +277,7 @@ function handlePreUpload(req: Request, res: ServerResponse) {
           value: '接收',
           action: () => {
             // ToastUtil.showToast('已接受')
-            sessionId = generateUUID()
+            sessionId = RandomUtil.generateUUID32()
             let resBody: PrepareUploadResult = {
               files: fileInfoMap,
               sessionId: sessionId
@@ -411,14 +428,27 @@ function handleUpload(req: Request, res: ServerResponse, context: Context) {
   }
 }
 
-function generateUUID(): string {
-  let uuidValue = "";
-  for (let k = 0; k < 32;k++) {
-    let randomValue = Math.random() * 16 | 0;
-    if (k == 8 || k == 12 || k == 16 || k == 20) {
-      uuidValue += "-"
+function handleRegister(req: Request, res: ServerResponse) {
+  try {
+    let postData = req.files.get('postData')
+    if (postData && req.getBodySize() > 0) {
+      let body: RegisteredDevice = JSON.parse(postData.toString())
+      // let deviceInfo: RegisteredDevice = {
+      //   alias: body['alias'],
+      //   ip: '',
+      //   version: body['version'],
+      //   deviceModel: body['deviceModel'],
+      //   deviceType: body['deviceType'],
+      //   fingerprint: body['fingerprint'],
+      //   port: body['port'],
+      //   protocol: body['protocol'],
+      //   download: body['download']
+      // }
+      registeredDeviceList.push(body)
+      AppStorage.setOrCreate('deviceList', registeredDeviceList)
     }
-    uuidValue += (k == 12 ? 4 : (k == 16 ? (randomValue & 3 | 8) : randomValue)).toString(16);
+    res.end('{}')
+  } catch (err) {
+    LogUtil.error(err)
   }
-  return uuidValue;
 }
