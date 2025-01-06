@@ -24,8 +24,8 @@ export struct SettingsTab {
     this.deviceAlias = dataPreferences.getSync('alias', 'default') as string
     this.deviceType = dataPreferences.getSync('deviceType', 'default') as string
     this.deviceModel = dataPreferences.getSync('deviceModel', 'default') as string
-    this.port = dataPreferences.getSync('serverPort', 'default') as number
-    this.searchTimeout = dataPreferences.getSync('searchTimeout', 'default') as number
+    this.port = dataPreferences.getSync('serverPort', 53317) as number
+    this.searchTimeout = dataPreferences.getSync('searchTimeout', 1000) as number
     this.encryptOn = dataPreferences.getSync('encryptOn', 'default') as boolean
     this.multicast = dataPreferences.getSync('multicastAddress', 'default') as string
     this.showRestartServerHind = dataPreferences.getSync('showRestartServerHind', 'default') as boolean

@@ -10,7 +10,7 @@ Only support HTTP for now, please disable encryption
 - [ ] HTTPS Support
 - [ ] Issuing Self-Signed SSL/TLS Certificate(for https transport purpose)
 - [ ] More Transport Format Support(Folder, Paste, text, etc.)
-- [ ] Self-discovery and multicast in LAN
+- [x] Self-discovery and multicast in LAN
 - [x] Stop and Restart Server
 - [ ] More Response Code Support
 

@@ -3,12 +3,12 @@ import { BusinessError } from '@kit.BasicServicesKit'
 import { readFile } from '../utils/ReadFile'
 import { fileIo } from '@kit.CoreFileKit'
 import { CryptoJS } from '@ohos/crypto-js'
-import { DeviceUtil, FileUtil, LogUtil, NetworkUtil, RandomUtil, ToastUtil } from '@pura/harmony-utils'
+import { CryptoUtil, DeviceUtil, FileUtil, LogUtil, NetworkUtil, RandomUtil, ToastUtil } from '@pura/harmony-utils'
 import { preferences } from '@kit.ArkData'
 import { DialogHelper, SpinType } from '@pura/harmony-dialog'
 import { socket } from '@kit.NetworkKit'
 import { taskpool } from '@kit.ArkTS'
-import axios, { AxiosResponse } from '@ohos/axios'
+import axios, { AxiosError, AxiosResponse } from '@ohos/axios'
 
 let dataPreferences = preferences.getPreferencesSync(getContext(), { name: 'config.db' });
 
@@ -35,6 +35,29 @@ export struct SendTab {
   @State receiverIP: string = ''
   @State fileName: string = 'Empty'
   @State fileUri: string = ''
+
+  @StorageLink('deviceList') localDevices: Array<string> = []
+
+  // aboutToAppear(): void {
+  //   // 开启加载弹窗
+  //   let dialogId = DialogHelper.showLoadingDialog({
+  //     loadType: SpinType.spinP,
+  //     loadColor: Color.White,
+  //     loadSize: 70,
+  //     backgroundColor: '#BB000000',
+  //     content: "扫描中……",
+  //     fontSize: 16,
+  //     padding: {
+  //       top: 30,
+  //       right: 50,
+  //       bottom: 30,
+  //       left: 50
+  //     },
+  //     autoCancel: false
+  //   })
+  //   tcpScan(dialogId)
+  //   this.localDevices = AppStorage.get('deviceList') || []
+  // }
 
   build() {
 
@@ -179,8 +202,6 @@ export struct SendTab {
               fileType: fileExt == '' ? fileExt : 'application/octet-stream'
             }
 
-            // let fileMetaData: string = `{"info":{"alias":"Mate70Pro+","version":"2.1","deviceModel":"Huawei1","deviceType":"mobile","fingerprint":"${CryptoJS.SHA256(deviceId)}","port":53317,"protocol":"http","download":false},"files":{"${fileId}":{"id":"${fileId}","fileName":"${fileName}","size":${stat.size},"fileType":"application/octet-stream"}}}`
-
             let header: rcp.RequestHeaders = { 'content-type': 'application/json' }
             const preUploadSession = rcp.createSession({ headers: header })
             preUploadSession.post(`http://${this.receiverIP}:53317/api/localsend/v2/prepare-upload`,
@@ -239,7 +260,7 @@ export struct SendTab {
       Button('扫描本地网络')
         .width('90%')
         .margin({ bottom: '16vp' })
-        .onClick(async () => {
+        .onClick(() => {
           // 开启加载弹窗
           let dialogId = DialogHelper.showLoadingDialog({
             loadType: SpinType.spinP,
@@ -256,8 +277,34 @@ export struct SendTab {
             },
             autoCancel: false
           })
-          await tcpScan(dialogId)
+          tcpScan(dialogId).then(() => {
+            this.localDevices = AppStorage.get('deviceList') || []
+          })
+
         })
+
+      List() {
+        ForEach(this.localDevices, (item: string) => {
+          ListItem() {
+            Row() {
+              Text(JSON.parse(item).ip)
+                .margin({ right: '4vp' })
+              Text(JSON.parse(item).alias)
+                .margin({ right: '4vp'})
+              Text(JSON.parse(item).deviceType)
+                .margin({ right: '4vp'})
+            }
+            .width('100%')
+            .justifyContent(FlexAlign.Start)
+            // .margin({ top: '8vp', left: '4vp', right: '4vp', bottom: '8vp'})
+          }
+        }, (item: string) => JSON.parse(item).fingerprint)
+      }
+      .width('90%')
+      .height('200vp')
+      .borderColor(Color.Blue)
+      .borderWidth('2vp')
+      .borderRadius('8vp')
     }
     .width('100%')
     .height('100%')
@@ -277,7 +324,7 @@ function getDeviceInfo() {
     version: "2.1",
     deviceModel: model,
     deviceType: type,
-    fingerprint: CryptoJS.SHA256(deviceId).toString(CryptoJS.enc.Utf8),
+    fingerprint: CryptoUtil.digestSync(deviceId, 'SHA256'), // CryptoJS.SHA256(deviceId).toString(),
     port: port,
     protocol: proto,
     download: false
@@ -285,42 +332,68 @@ function getDeviceInfo() {
 }
 
 @Concurrent
-function scanOneIp(remoteIp: string, deviceInfo: string) {
+async function scanOneIp(remoteIp: string, deviceInfo: string, timeOut: number) {
   LogUtil.info(`${remoteIp} is scanning`)
-  let scanRcp = rcp.createSession({
-    headers: { 'content-type': 'application/json' },
-    requestConfiguration: { transfer: { timeout: { connectMs: 1000 }}}
-  })
-  let result = new Map<string, string>()
-  scanRcp.post(`http://${remoteIp}:53317/api/localsend/v2/register`, deviceInfo).then((res) => {
-    let regDevice: RegisteredDevice = res.toJSON() as RegisteredDevice
-    regDevice.ip = remoteIp
-    LogUtil.info(`${remoteIp} scan finished`)
-    result.set(remoteIp, JSON.stringify(regDevice))
-  }).catch((err: BusinessError) => {
-    LogUtil.info(`${remoteIp} scan finished`)
-    result.set(remoteIp, err.message)
-  })
+  const url = `http://${remoteIp}:53317/api/localsend/v2/register`
+
+  let result = ''
+  try {
+    const response: AxiosResponse<RegisteredDevice> = await axios.post<RegisteredDevice, AxiosResponse<RegisteredDevice>, string>(url, deviceInfo, { timeout: timeOut })
+    result = JSON.stringify(response)
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      result = error.message
+    } else {
+      result = ''
+    }
+  }
   return result
 }
 
-async function tcpScan(dialogId: string) {
+async function tcpScan(dialogId: string): Promise<void> {
   let localIp = NetworkUtil.getIpAddress()
   let lastTag = parseInt(localIp.substring(localIp.lastIndexOf('.') + 1))
-  let taskGroup: taskpool.TaskGroup = new taskpool.TaskGroup()
+  let ipSeg = localIp.substring(0, localIp.lastIndexOf('.') + 1)
+  let searchTime = dataPreferences.getSync('searchTimeout', 1000) as number
+  // let deviceList: Array<string> = AppStorage.get('deviceList') || []
+  let deviceList: Array<string> = []
+  let taskGroup = new taskpool.TaskGroup()
   for (let i = 0; i < 255; i++) {
     if (i === lastTag) continue
-    let remoteIp = localIp.substring(0, localIp.lastIndexOf('.') + 1) + i
-
-    let task: taskpool.Task = new taskpool.Task(scanOneIp, remoteIp, getDeviceInfo())
+    let remoteIp = ipSeg + i
+    let task: taskpool.Task = new taskpool.Task(scanOneIp, remoteIp, getDeviceInfo(), searchTime)
     taskGroup.addTask(task)
   }
-  await taskpool.execute(taskGroup, taskpool.Priority.HIGH).then((ret: Object) => {
-    LogUtil.info(ret.toString())
+
+  taskpool.execute(taskGroup).then((ret: object) => {
+    for (let i = 0; i < (ret as Array<string>).length; i++) {
+      let ip = ipSeg + i
+      let rawData = (ret as Array<string>)[i]
+      LogUtil.info(`${ip}: ${rawData}`)
+      if (rawData.indexOf('data') !== -1) {
+        // let deviceInfo: RegisteredDevice = JSON.parse(rawData).data
+        let deviceInfo: RegisteredDevice = JSON.parse(rawData).data as RegisteredDevice
+        deviceInfo.ip = ip
+        deviceInfo.port = deviceInfo.port || 53317
+        deviceInfo.protocol = deviceInfo.protocol || 'http'
+        let deviceString = JSON.stringify(deviceInfo)
+
+        LogUtil.info(`deviceInfo: ${deviceString}`)
+        deviceList.push(deviceString)
+      }
+    }
+    if (deviceList.length > 0) {
+      AppStorage.setOrCreate('deviceList', deviceList)
+      LogUtil.info(`scan finished, deviceList len=${deviceList.length}, data=${deviceList}`)
+    } else {
+      LogUtil.info(`scan finished, deviceList is Empty}`)
+    }
+  }).catch((error: BusinessError) => {
+    LogUtil.error(error.message)
+  }).finally(() => {
+    DialogHelper.closeDialog(dialogId)
   })
 
-  LogUtil.info(`scan finished, AppStorage: ${AppStorage.get('deviceList')}`)
-  DialogHelper.closeDialog(dialogId)
 }
 
 function udpBroadcast() {

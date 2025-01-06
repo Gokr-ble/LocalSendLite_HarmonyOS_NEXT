@@ -147,10 +147,11 @@ export struct ReceiveTab {
         Toggle({ type: ToggleType.Switch, isOn: this.serverOn})
           .onChange((isOn: boolean) => {
             if (isOn) {
-              ToastUtil.showToast("Server (pretend) On")
+              ToastUtil.showToast("服务开启")
               startServer()
+              this.alias = dataPreferences.getSync('alias', 'Default') as string
             } else {
-              ToastUtil.showToast("Server (pretend) Off")
+              ToastUtil.showToast("服务关闭")
               stopServer()
             }
           })
