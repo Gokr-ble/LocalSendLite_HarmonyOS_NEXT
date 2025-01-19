@@ -1,11 +1,12 @@
-import { DeviceUtil, LogUtil } from '@pura/harmony-utils';
+import { DeviceUtil, LogUtil, NetworkUtil, ToastUtil } from '@pura/harmony-utils';
 import { ReceiveTab } from './ReceiveTab';
 import { SendTab } from './SendTab';
 import { SettingsTab } from './SettingsTab';
 import { preferences } from '@kit.ArkData';
 import { BusinessError } from '@kit.BasicServicesKit';
+import { getConfigPreference } from '../utils/ReadConfig';
 
-let dataPreferences = preferences.getPreferencesSync(getContext(), { name: 'config.db' });
+let dataPreferences = getConfigPreference()
 
 @Entry()
 @Component
@@ -49,6 +50,25 @@ struct Index {
     // 初始化AppStorage
     AppStorage.setOrCreate('serverOn', true)
     AppStorage.setOrCreate('serverAlias', dataPreferences.getSync('alias', 'Default') as string)
+
+    // 注册网络状态变化回调
+    NetworkUtil.register((netHandle) => {
+      LogUtil.info(`网络可用: ${JSON.stringify(netHandle)}`)
+    }, () => {
+      LogUtil.error('网络不可用')
+      ToastUtil.showToast('网络不可用')
+    }, (netCapabilityInfo) => {
+      LogUtil.info(`网络能力变化: ${JSON.stringify(netCapabilityInfo)}`)
+    }, (netConnectionPropertyInfo) => {
+      LogUtil.info(`网络连接信息变化: ${JSON.stringify(netConnectionPropertyInfo)}`)
+      ToastUtil.showToast('网络环境发生变化')
+      AppStorage.setOrCreate('CurrentIPAddress', NetworkUtil.getIpAddress())
+      // this.serverHost = NetworkUtil.getIpAddress()
+    }, (netBlockStatusInfo) => {
+      LogUtil.info(`网络阻塞状态: ${JSON.stringify(netBlockStatusInfo)}`)
+    }, (netHandle) => {
+      LogUtil.info(`网络丢失: ${JSON.stringify(netHandle)}`)
+    })
   }
 
   build() {

@@ -2,8 +2,9 @@ import { LogUtil } from "@pura/harmony-utils"
 import { preferences } from '@kit.ArkData';
 import { BusinessError } from "@kit.BasicServicesKit";
 import { common } from "@kit.AbilityKit";
+import { getConfigPreference } from "../utils/ReadConfig";
 
-let dataPreferences = preferences.getPreferencesSync(getContext(), { name: 'config.db' });
+let dataPreferences = getConfigPreference()
 
 @Component
 @Preview
