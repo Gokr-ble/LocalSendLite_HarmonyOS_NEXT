@@ -14,6 +14,7 @@ import { continuationManager } from '@kit.AbilityKit'
 import { tcpScan } from '../utils/ScanLocalNetwork'
 import { getConfigPreference } from '../utils/ReadConfig'
 import { sendFile } from '../utils/SendFile'
+import { ShareController } from '../controller/ShareController'
 
 let dataPreferences = getConfigPreference()
 
@@ -21,34 +22,34 @@ let dataPreferences = getConfigPreference()
 @Preview
 export struct SendTab {
   @State receiverIP: string = '未选择'
-  @State fileName: string = '未选择'
-  @State fileUriList: string[] = []
+  @StorageLink('fileDisplayName') fileName: string = '未选择'
+  @StorageLink('fileUriList') fileUriList: string[] = []
   @State scanIPRange: string = NetworkUtil.getIpAddress()
   @StorageLink('deviceList') localDevices: Array<string> = []
 
-  // aboutToAppear(): void {
-  //   // 开启加载弹窗
-  //   let dialogId = DialogHelper.showLoadingDialog({
-  //     loadType: SpinType.spinP,
-  //     loadColor: Color.White,
-  //     loadSize: 70,
-  //     backgroundColor: '#BB000000',
-  //     content: "扫描中……",
-  //     fontSize: 16,
-  //     padding: {
-  //       top: 30,
-  //       right: 50,
-  //       bottom: 30,
-  //       left: 50
-  //     },
-  //     autoCancel: false
-  //   })
-  //   tcpScan(dialogId)
-  //   this.localDevices = AppStorage.get('deviceList') || []
-  // }
+  aboutToAppear(): void {
+    if (AppStorage.has('fileUriList')) {
+      this.clearFileData()
+      this.fileUriList = AppStorage.get('fileUriList') || []
+      if (this.fileUriList.length > 0) {
+        this.fileName = uriListToFileName(this.fileUriList)
+      }
+    }
+  }
+
+  private clearFileData = () => {
+    this.fileName = '未选择'
+    this.fileUriList = []
+  }
+
+  private setFileData = (uriList: string[]) => {
+    if (uriList.length > 0) {
+      this.fileUriList = uriList
+      this.fileName = uriListToFileName(this.fileUriList)
+    }
+  }
 
   build() {
-
     Column() {
       Row() {
         Text('接收IP')
@@ -85,14 +86,7 @@ export struct SendTab {
         .margin({ bottom: '16vp' })
         .onClick(async () => {
           let uriList: string[] = await pickFile()
-          let displayName = ''
-          for (let i = 0; i < uriList.length; i++) {
-            displayName += decodeURI(uriList[i].substring(uriList[i].lastIndexOf('/') + 1, uriList[i].length))
-            if (uriList.length > 1 && i < uriList.length - 1) {
-              displayName += ','
-            }
-          }
-          this.fileName = displayName
+          this.fileName = uriListToFileName(uriList)
           this.fileUriList = uriList
         })
 
@@ -213,4 +207,19 @@ function validLocalIP(ip: string): boolean {
     return true
   }
   return false
+}
+
+function uriToFileName(uri: string): string {
+  return decodeURI(uri.substring(uri.lastIndexOf('/') + 1, uri.length))
+}
+
+function uriListToFileName(uriList: string[]): string {
+  let displayName = ''
+  for (let i = 0; i < uriList.length; i++) {
+    displayName += decodeURI(uriList[i].substring(uriList[i].lastIndexOf('/') + 1, uriList[i].length))
+    if (uriList.length > 1 && i < uriList.length - 1) {
+      displayName += ','
+    }
+  }
+  return displayName
 }

@@ -95,7 +95,11 @@ export async function sendFile(fileUriList: string[], receiverIP: string) {
       })
       ToastUtil.showToast(`发送成功，共发送${fileInfoSentList.length}个文件`)
     } catch (error) {
-      LogUtil.error(`pre-upload Error: ${error}`)
+      if (axios.isAxiosError(error)) {
+        LogUtil.error(`pre-upload Error: ${error.message}`)
+        ToastUtil.showToast(`发送失败：${error.message}`)
+      }
+      DialogHelper.closeDialog(dialogId)
     }
 
   } catch (error) {

@@ -28,7 +28,100 @@
               "entity.system.home"
             ],
             "actions": [
-              "action.system.home"
+              "action.system.home",
+              "ohos.want.action.sendData"
+            ],
+            "uris": [
+              {
+                "scheme": "file",
+                "utd": "general.text",
+                "maxFileSupported": 9
+              },
+              {
+                "scheme": "file",
+                "utd": "general.composite-object",
+                "maxFileSupported": 9
+              },
+              {
+                "scheme": "file",
+                "utd": "general.source-code",
+                "maxFileSupported": 9
+              },
+              {
+                "scheme": "file",
+                "utd": "general.script",
+                "maxFileSupported": 9
+              },
+              {
+                "scheme": "file",
+                "utd": "general.ebook",
+                "maxFileSupported": 9
+              },
+              {
+                "scheme": "file",
+                "utd": "general.media",
+                "maxFileSupported": 9
+              },
+              {
+                "scheme": "file",
+                "utd": "general.image",
+                "maxFileSupported": 9
+              },
+              {
+                "scheme": "file",
+                "utd": "general.delimited-values-text",
+                "maxFileSupported": 9
+              },
+              {
+                "scheme": "file",
+                "utd": "general.raw-image",
+                "maxFileSupported": 9
+              },
+              {
+                "scheme": "file",
+                "utd": "general.video",
+                "maxFileSupported": 9
+              },
+              {
+                "scheme": "file",
+                "utd": "general.audio",
+                "maxFileSupported": 9
+              },
+              {
+                "scheme": "file",
+                "utd": "general.file",
+                "maxFileSupported": 9
+              },
+              //              {
+              //                "scheme": "file",
+              //                "utd": "general.directory",
+              //                "maxFileSupported": 9
+              //              },
+              //              {
+              //                "scheme": "file",
+              //                "utd": "general.folder",
+              //                "maxFileSupported": 9
+              //              },
+              {
+                "scheme": "file",
+                "utd": "general.archive",
+                "maxFileSupported": 9
+              },
+              {
+                "scheme": "file",
+                "utd": "general.font",
+                "maxFileSupported": 9
+              },
+              {
+                "scheme": "file",
+                "utd": "general.cad",
+                "maxFileSupported": 9
+              },
+              {
+                "scheme": "file",
+                "utd": "general.octet-stream",
+                "maxFileSupported": 9
+              }
             ]
           }
         ]
@@ -47,114 +140,6 @@
           }
         ],
       },
-      {
-        "name": "ShareAbility",
-        "srcEntry": "./ets/pages/SendTab.ets",
-        "type": "share",
-        "exported": true,
-        "label": "$string:app_name",
-        "icon": "$media:app_icon",
-        "description": "$string:title",
-        "skills": [
-          {
-            "actions": [
-              "ohos.want.action.sendData"
-            ],
-            "uris": [
-              {
-                "scheme": "file",
-                "utd": "general.text",
-                "maxFileSupported": 1
-              },
-              {
-                "scheme": "file",
-                "utd": "general.composite-object",
-                "maxFileSupported": 1
-              },
-              {
-                "scheme": "file",
-                "utd": "general.source-code",
-                "maxFileSupported": 1
-              },
-              {
-                "scheme": "file",
-                "utd": "general.script",
-                "maxFileSupported": 1
-              },
-              {
-                "scheme": "file",
-                "utd": "general.ebook",
-                "maxFileSupported": 1
-              },
-              {
-                "scheme": "file",
-                "utd": "general.media",
-                "maxFileSupported": 1
-              },
-              {
-                "scheme": "file",
-                "utd": "general.image",
-                "maxFileSupported": 1
-              },
-              {
-                "scheme": "file",
-                "utd": "general.delimited-values-text",
-                "maxFileSupported": 1
-              },
-              {
-                "scheme": "file",
-                "utd": "general.raw-image",
-                "maxFileSupported": 1
-              },
-              {
-                "scheme": "file",
-                "utd": "general.video",
-                "maxFileSupported": 1
-              },
-              {
-                "scheme": "file",
-                "utd": "general.audio",
-                "maxFileSupported": 1
-              },
-              {
-                "scheme": "file",
-                "utd": "general.file",
-                "maxFileSupported": 1
-              },
-//              {
-//                "scheme": "file",
-//                "utd": "general.directory",
-//                "maxFileSupported": 1
-//              },
-//              {
-//                "scheme": "file",
-//                "utd": "general.folder",
-//                "maxFileSupported": 1
-//              },
-              {
-                "scheme": "file",
-                "utd": "general.archive",
-                "maxFileSupported": 1
-              },
-              {
-                "scheme": "file",
-                "utd": "general.font",
-                "maxFileSupported": 1
-              },
-              {
-                "scheme": "file",
-                "utd": "general.cad",
-                "maxFileSupported": 1
-              },
-              {
-                "scheme": "file",
-                "utd": "general.octet-stream",
-                "maxFileSupported": 1
-              }
-            ]
-          }
-        ]
-      }
     ],
     "requestPermissions": [
       {

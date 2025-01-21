@@ -10,6 +10,8 @@ import { url } from '@kit.ArkTS'
 import { fileUri, picker, fileIo as fs, WriteOptions } from '@kit.CoreFileKit'
 import { BusinessError } from '@kit.BasicServicesKit'
 import { RegisteredDevice } from '../model/RegisteredDevice'
+import { AnimatorResult } from '@kit.ArkUI'
+import { AnimController } from '../controller/AnimController'
 
 export class MyServer {
   app = polka()
@@ -18,11 +20,20 @@ export class MyServer {
   sessionId: string = ''
   savingDialogId: string = ''
   dataPreferences = getConfigPreference()
+  animController: AnimController | undefined = undefined
+
+  // constructor(animControllerRef: AnimController) {
+  //   this.animController = animControllerRef
+  // }
 
   startServer() {
     this.dataPreferences.putSync('showRestartServerHind', false)
 
-    // animatorOptions?.play()
+    let animatorOptions: AnimatorResult | undefined = AppStorage.get('animatorOptions')
+    animatorOptions?.play()
+    LogUtil.info(`animatorOptions: ${animatorOptions}`)
+
+    // this.animController?.playAnimation()
 
     let port = this.dataPreferences.getSync('serverPort', 'default') as number
 
@@ -63,7 +74,10 @@ export class MyServer {
   stopServer() {
     this.app.server?.stop()
     NetworkUtil.unregister()
-    // animatorOptions?.finish()
+    let animatorOptions: AnimatorResult | undefined = AppStorage.get('animatorOptions')
+    animatorOptions?.finish()
+
+    // this.animController?.pauseAnimation()
   }
 
   handleInfo(req: Request, res: ServerResponse) {
