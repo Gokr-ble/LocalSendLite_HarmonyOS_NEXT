@@ -19,7 +19,6 @@ import { AnimController } from '../controller/AnimController';
 
 
 let dataPreferences = getConfigPreference()
-// let registeredDeviceList: Array<RegisteredDevice> = []
 
 let animatorOptions: AnimatorResult | undefined = undefined
 let animatorOption: AnimatorOptions = {
@@ -32,15 +31,6 @@ let animatorOption: AnimatorOptions = {
   begin: 0,
   end: 360
 }
-
-// const app = polka()
-// const fileInfo: Map<string, FileInfoSaved> = new Map()
-// let sessionId: string = ''
-// let savingDialogId: string = ''
-
-// let storage: LocalStorage = new LocalStorage()
-// storage.setOrCreate('alias', dataPreferences.getSync('alias', 'default') as string)
-// storage.setOrCreate('serverOn', true)
 
 @Component
 @Preview
@@ -78,23 +68,6 @@ export struct ReceiveTab {
     this.serverHost = NetworkUtil.getIpAddress()
     AppStorage.setOrCreate('context', getContext(this) as common.Context)
     this.server.startServer()
-    // 注册网络状态变化回调
-    // NetworkUtil.register((netHandle) => {
-    //   LogUtil.info(`网络可用: ${JSON.stringify(netHandle)}`)
-    // }, () => {
-    //   LogUtil.error('网络不可用')
-    //   ToastUtil.showToast('网络不可用')
-    // }, (netCapabilityInfo) => {
-    //   LogUtil.info(`网络能力变化: ${JSON.stringify(netCapabilityInfo)}`)
-    // }, (netConnectionPropertyInfo) => {
-    //   LogUtil.info(`网络连接信息变化: ${JSON.stringify(netConnectionPropertyInfo)}`)
-    //   ToastUtil.showToast('网络环境发生变化')
-    //   this.serverHost = NetworkUtil.getIpAddress()
-    // }, (netBlockStatusInfo) => {
-    //   LogUtil.info(`网络阻塞状态: ${JSON.stringify(netBlockStatusInfo)}`)
-    // }, (netHandle) => {
-    //   LogUtil.info(`网络丢失: ${JSON.stringify(netHandle)}`)
-    // })
 
   }
 

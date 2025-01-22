@@ -5,6 +5,7 @@ import { SettingsTab } from './SettingsTab';
 import { preferences } from '@kit.ArkData';
 import { BusinessError } from '@kit.BasicServicesKit';
 import { getConfigPreference } from '../utils/ReadConfig';
+import { tcpScan } from '../utils/ScanLocalNetwork';
 
 let dataPreferences = getConfigPreference()
 
@@ -12,7 +13,6 @@ let dataPreferences = getConfigPreference()
 @Component
 @Preview
 struct Index {
-  @State message: string = 'Hello World';
 
   aboutToAppear() {
     // 检查是否包含参数配置
@@ -61,7 +61,7 @@ struct Index {
       LogUtil.info(`网络能力变化: ${JSON.stringify(netCapabilityInfo)}`)
     }, (netConnectionPropertyInfo) => {
       LogUtil.info(`网络连接信息变化: ${JSON.stringify(netConnectionPropertyInfo)}`)
-      ToastUtil.showToast('网络环境发生变化')
+      // ToastUtil.showToast('网络环境发生变化')
       AppStorage.setOrCreate('CurrentIPAddress', NetworkUtil.getIpAddress())
       // this.serverHost = NetworkUtil.getIpAddress()
     }, (netBlockStatusInfo) => {

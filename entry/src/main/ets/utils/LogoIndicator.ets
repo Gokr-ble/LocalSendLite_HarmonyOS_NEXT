@@ -31,57 +31,57 @@ export struct LogoIndicator {
   // }
   // @State animatorStatus: string = '创建'
 
-  // controller: AnimController = new AnimController()
-  //
-  // aboutToAppear(): void {
-  //   if (this.controller) {
-  //     this.controller.playAnimation = this.playAnimation
-  //     this.controller.pauseAnimation = this.pauseAnimation
-  //     this.controller.resetAnimation = this.resetAnimation
-  //     this.controller.finishAnimation = this.finishAnimation
-  //     this.controller.cancelAnimation = this.cancelAnimation
-  //   }
-  // }
-  //
-  // private playAnimation = () => {
-  //   this.animatorOptions?.play()
-  // }
-  //
-  // private pauseAnimation = () => {
-  //   this.animatorOptions?.pause()
-  // }
-  //
-  // private resetAnimation = () => {
-  //   this.angle = 0
-  // }
-  //
-  // private finishAnimation = () => {
-  //   this.animatorOptions?.finish()
-  // }
-  //
-  // private cancelAnimation = () => {
-  //   this.animatorOptions?.cancel()
-  // }
-  //
-  // onPageShow(): void {
-  //   this.animatorOptions = this.getUIContext().createAnimator(this.animatorOption)
-  //   this.animatorOptions.onFrame = (progress: number) => {
-  //     this.angle = progress
-  //   }
-  //   this.animatorOptions.onCancel = () => {
-  //     LogUtil.info('动画取消')
-  //   }
-  //   this.animatorOptions.onFinish = () => {
-  //     LogUtil.info('动画完成')
-  //   }
-  //   this.animatorOptions.onCancel = () => {
-  //     LogUtil.info('动画重复播放')
-  //   }
-  // }
+  controller: AnimController = new AnimController()
 
-  // onPageHide(): void {
-  //   this.animatorOptions = undefined
-  // }
+  aboutToAppear(): void {
+    if (this.controller) {
+      this.controller.playAnimation = this.playAnimation
+      this.controller.pauseAnimation = this.pauseAnimation
+      this.controller.resetAnimation = this.resetAnimation
+      this.controller.finishAnimation = this.finishAnimation
+      this.controller.cancelAnimation = this.cancelAnimation
+    }
+  }
+
+  private playAnimation = () => {
+    this.animatorOptions?.play()
+  }
+
+  private pauseAnimation = () => {
+    this.animatorOptions?.pause()
+  }
+
+  private resetAnimation = () => {
+    this.angle = 0
+  }
+
+  private finishAnimation = () => {
+    this.animatorOptions?.finish()
+  }
+
+  private cancelAnimation = () => {
+    this.animatorOptions?.cancel()
+  }
+
+  onPageShow(): void {
+    this.animatorOptions = this.getUIContext().createAnimator(this.animatorOption)
+    this.animatorOptions.onFrame = (progress: number) => {
+      this.angle = progress
+    }
+    this.animatorOptions.onCancel = () => {
+      LogUtil.info('动画取消')
+    }
+    this.animatorOptions.onFinish = () => {
+      LogUtil.info('动画完成')
+    }
+    this.animatorOptions.onCancel = () => {
+      LogUtil.info('动画重复播放')
+    }
+  }
+
+  onPageHide(): void {
+    this.animatorOptions = undefined
+  }
 
   build() {
     Image($r("app.media.RecvPageLogo"))

@@ -18,14 +18,22 @@ import { ShareController } from '../controller/ShareController'
 
 let dataPreferences = getConfigPreference()
 
+@AnimatableExtend(LoadingProgress)
+function animatableWidth(width: number) {
+  .width(width)
+}
+
 @Component
 @Preview
 export struct SendTab {
   @State receiverIP: string = '未选择'
   @StorageLink('fileDisplayName') fileName: string = '未选择'
   @StorageLink('fileUriList') fileUriList: string[] = []
-  @State scanIPRange: string = NetworkUtil.getIpAddress()
+  @StorageLink('scanIPRange') scanIPRange: string = NetworkUtil.getIpAddress()
   @StorageLink('deviceList') localDevices: Array<string> = []
+  @StorageLink('scanFinished') scanFinished: boolean = false;
+
+  @State loadingProgressWidth: number = 0;
 
   aboutToAppear(): void {
     if (AppStorage.has('fileUriList')) {
@@ -49,8 +57,22 @@ export struct SendTab {
     }
   }
 
+  private parseDeviceTypeImage = (deviceType: string) => {
+    let result = $r('app.media.device_type_unknown')
+    if (deviceType === 'desktop') {
+      result = $r('app.media.device_type_desktop')
+    } else if (deviceType === 'mobile') {
+      result = $r('app.media.device_type_mobile')
+    }
+    return result
+  }
+
+  private changeLoadingStatus = () => {
+    this.loadingProgressWidth = this.loadingProgressWidth === 0 ? 24 : 0
+  }
+
   build() {
-    Column() {
+    Column({ space: 16 }) {
       Row() {
         Text('接收IP')
           .margin({ right: '16vp' })
@@ -63,7 +85,7 @@ export struct SendTab {
           })
       }
       .width('85%')
-      .margin({ bottom: '16vp' })
+      // .margin({ bottom: '16vp' })
 
       Row() {
         Text('文件')
@@ -79,11 +101,11 @@ export struct SendTab {
           .textOverflow({ overflow: TextOverflow.MARQUEE })
       }
       .width('85%')
-      .margin({ bottom: '16vp' })
+      // .margin({ bottom: '16vp' })
 
       Button('选择文件')
         .width('90%')
-        .margin({ bottom: '16vp' })
+        // .margin({ bottom: '16vp' })
         .onClick(async () => {
           let uriList: string[] = await pickFile()
           this.fileName = uriListToFileName(uriList)
@@ -92,7 +114,7 @@ export struct SendTab {
 
       Button('发送文件')
         .width('90%')
-        .margin({ bottom: '16vp' })
+        // .margin({ bottom: '16vp' })
         .onClick(async () => {
           if (this.fileUriList.length === 0) {
             ToastUtil.showToast("请选择文件")
@@ -107,11 +129,11 @@ export struct SendTab {
 
       Text('请确保目标连接的是同一个Wi-Fi网络')
         .width('90%')
-        .margin({ bottom: '8vp' })
+        // .margin({ bottom: '8vp' })
         .textAlign(TextAlign.Center)
       Text(`当前扫描范围：${this.scanIPRange}`)
         .width('90%')
-        .margin({ bottom: '16vp' })
+        // .margin({ bottom: '16vp' })
         .textAlign(TextAlign.Center)
 
       Row({ space: 4 }) {
@@ -120,47 +142,66 @@ export struct SendTab {
           .onChange((value: string) => {
             this.scanIPRange = value
           })
-        Button('扫描本地网络')
-          .width('40%')
-          .onClick(() => {
-            if (!validLocalIP(this.scanIPRange)) {
-              ToastUtil.showToast('扫描IP段非法')
-            } else {
-              // 开启加载弹窗
-              let dialogId = DialogHelper.showLoadingDialog({
-                // loadType: SpinType.spinP,
-                loadColor: Color.White,
-                loadSize: 70,
-                backgroundColor: '#BB000000',
-                content: "扫描中……",
-                fontSize: 16,
-                padding: {
-                  top: 30,
-                  right: 50,
-                  bottom: 30,
-                  left: 50
-                },
-                autoCancel: false
-              })
-              tcpScan(dialogId, this.scanIPRange).then(() => {
-                this.localDevices = AppStorage.get('deviceList') || []
-              })
-            }
-          })
+        Button() {
+          Row() {
+            LoadingProgress()
+              .animatableWidth(this.loadingProgressWidth)
+              .animation({ duration: 1000, curve: Curve.Ease })
+              .height(24)
+              .color(0xFFFFFF)
+              // .enableLoading(!this.scanFinished)
+            Text('扫描本地网络')
+              .margin({ left: '4vp', right: '4vp' })
+              .fontColor(0xFFFFFF)
+          }.alignItems(VerticalAlign.Center)
+        }
+        .width('40%')
+        .height('40vp')
+        .onClick(async () => {
+          if (!validLocalIP(this.scanIPRange)) {
+            ToastUtil.showToast('扫描IP段非法')
+          } else {
+            // 开启加载弹窗
+            // let dialogId = DialogHelper.showLoadingDialog({
+            //   // loadType: SpinType.spinP,
+            //   loadColor: Color.White,
+            //   loadSize: 70,
+            //   backgroundColor: '#BB000000',
+            //   content: "扫描中……",
+            //   fontSize: 16,
+            //   padding: {
+            //     top: 30,
+            //     right: 50,
+            //     bottom: 30,
+            //     left: 50
+            //   },
+            //   autoCancel: false
+            // })
+            // AppStorage.setOrCreate('scanFinished', false)
+            this.changeLoadingStatus()
+            await tcpScan('', this.scanIPRange)
+            this.changeLoadingStatus()
+          }
+        })
       }
       .alignItems(VerticalAlign.Center)
-
 
       List() {
         ForEach(this.localDevices, (item: string) => {
           ListItem() {
             Row() {
-              Text(JSON.parse(item).ip)
-                .margin({ right: '4vp' })
-              Text(JSON.parse(item).alias)
-                .margin({ right: '4vp' })
-              Text(JSON.parse(item).deviceType)
-                .margin({ right: '4vp' })
+              Image(this.parseDeviceTypeImage(JSON.parse(item).deviceType))
+                .width('48vp')
+                .height('48vp')
+                .objectFit(ImageFit.Contain)
+                .margin('8vp')
+              Column({ space: 4 }) {
+                Text(JSON.parse(item).alias)
+                  .fontSize(18)
+                  .fontWeight(FontWeight.Bold)
+                Text(JSON.parse(item).ip)
+                  .fontSize(14)
+              }
             }
             .width('90%')
             .height(64)
@@ -170,8 +211,6 @@ export struct SendTab {
             .justifyContent(FlexAlign.Center)
             .transition(TransitionEffect.OPACITY
               .combine(TransitionEffect.scale({ x: 0, y: 0 }).animation({ curve: curves.springMotion(0.6, 1.2) })))
-
-            // .margin({ top: '8vp', left: '4vp', right: '4vp', bottom: '8vp'})
           }
           .clickEffect({ level: ClickEffectLevel.LIGHT })
           .onClick(() => {

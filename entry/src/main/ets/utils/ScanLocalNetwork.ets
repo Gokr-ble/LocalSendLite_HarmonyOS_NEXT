@@ -36,11 +36,8 @@ async function scanOneIp(remoteIp: string, deviceInfo: string, timeOut: number) 
  * @param scanIPRange
  * @returns
  */
-export async function tcpScan(dialogId: string, scanIPRange: string = NetworkUtil.getIpAddress()): Promise<void> {
+export async function tcpScan(dialogId: string, scanIPRange: string = NetworkUtil.getIpAddress()) {
   let localIp = NetworkUtil.getIpAddress()
-  // let lastTag = parseInt(localIp.substring(localIp.lastIndexOf('.') + 1))
-  // let ipSeg = localIp.substring(0, localIp.lastIndexOf('.') + 1)
-
   let ipSeg = scanIPRange.substring(0, scanIPRange.lastIndexOf('.') + 1)
 
   let searchTime = dataPreferences.getSync('searchTimeout', 1000) as number
@@ -54,11 +51,12 @@ export async function tcpScan(dialogId: string, scanIPRange: string = NetworkUti
     taskGroup.addTask(task)
   }
 
-  taskpool.execute(taskGroup).then((ret: object) => {
+  try {
+    const ret = await taskpool.execute(taskGroup)
     for (let i = 0; i < (ret as Array<string>).length; i++) {
       let ip = ipSeg + i
       let rawData = (ret as Array<string>)[i]
-      LogUtil.info(`${ip}: ${rawData}`)
+      // LogUtil.info(`${ip}: ${rawData}`)
       if (rawData.indexOf('data') !== -1) {
         // let deviceInfo: RegisteredDevice = JSON.parse(rawData).data
         let deviceInfo: RegisteredDevice = JSON.parse(rawData).data as RegisteredDevice
@@ -77,12 +75,43 @@ export async function tcpScan(dialogId: string, scanIPRange: string = NetworkUti
     } else {
       LogUtil.info(`scan finished, deviceList is Empty}`)
     }
-  }).catch((error: BusinessError) => {
+  } catch (error) {
     LogUtil.error(error.message)
-  }).finally(() => {
+  } finally {
     DialogHelper.closeDialog(dialogId)
-  })
+  }
 
+  // taskpool.execute(taskGroup).then((ret: object) => {
+  //   for (let i = 0; i < (ret as Array<string>).length; i++) {
+  //     let ip = ipSeg + i
+  //     let rawData = (ret as Array<string>)[i]
+  //     // LogUtil.info(`${ip}: ${rawData}`)
+  //     if (rawData.indexOf('data') !== -1) {
+  //       // let deviceInfo: RegisteredDevice = JSON.parse(rawData).data
+  //       let deviceInfo: RegisteredDevice = JSON.parse(rawData).data as RegisteredDevice
+  //       deviceInfo.ip = ip
+  //       deviceInfo.port = deviceInfo.port || 53317
+  //       deviceInfo.protocol = deviceInfo.protocol || 'http'
+  //       let deviceString = JSON.stringify(deviceInfo)
+  //
+  //       LogUtil.info(`deviceInfo: ${deviceString}`)
+  //       deviceList.push(deviceString)
+  //     }
+  //   }
+  //   if (deviceList.length > 0) {
+  //     AppStorage.setOrCreate('deviceList', deviceList)
+  //     LogUtil.info(`scan finished, deviceList len=${deviceList.length}, data=${deviceList}`)
+  //   } else {
+  //     LogUtil.info(`scan finished, deviceList is Empty}`)
+  //   }
+  // }).catch((error: BusinessError) => {
+  //   LogUtil.error(error.message)
+  // }).finally(() => {
+  //   DialogHelper.closeDialog(dialogId)
+  // })
+
+  // return deviceList
+  // AppStorage.setOrCreate('scanFinished', true)
 }
 
 class SocketInfo {
