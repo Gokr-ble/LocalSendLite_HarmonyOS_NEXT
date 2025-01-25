@@ -1,5 +1,5 @@
 import polka, { Request, ServerResponse } from '@ohos/polka'
-import { DialogUtil, FileUtil, LogUtil, NetworkUtil, RandomUtil, ToastUtil } from '@pura/harmony-utils'
+import { DialogUtil, FileUtil, LogUtil, NetworkUtil, PasteboardUtil, RandomUtil, ToastUtil } from '@pura/harmony-utils'
 import { FileInfoSaved } from '../model/FileInfo'
 import { getConfigPreference } from './ReadConfig'
 import { common } from '@kit.AbilityKit'
@@ -15,6 +15,7 @@ import { AnimController } from '../controller/AnimController'
 
 export class MyServer {
   app = polka()
+  // 结构<fileId, {fileName, token, fileSize}>
   fileInfo: Map<string, FileInfoSaved> = new Map()
   registeredDeviceList: Array<RegisteredDevice> = []
   sessionId: string = ''
@@ -33,8 +34,6 @@ export class MyServer {
     animatorOptions?.play()
     LogUtil.info(`animatorOptions: ${animatorOptions}`)
 
-    // this.animController?.playAnimation()
-
     let port = this.dataPreferences.getSync('serverPort', 'default') as number
 
     if (port < 10000) {
@@ -44,30 +43,29 @@ export class MyServer {
 
     AppStorage.setOrCreate('serverPort', port)
 
-    this.app.listen(port, _ => {
+    this.app
+      .get('/api/localsend/v1/info', (req, res) => {
+        this.handleInfo(req, res)
+      })
+      .get('/api/localsend/v2/info', (req, res) => {
+        this.handleInfo(req, res)
+      })
+      .post('/api/localsend/v2/prepare-upload', (req, res) => {
+        this.handlePreUpload(req, res)
+      })
+      .post('/api/localsend/v2/upload', (req, res) => {
+        this.handleUpload(req, res, AppStorage.get('context') as common.Context)
+      })
+      .post('/api/localsend/v2/register', (req, res) => {
+        this.handleRegister(req, res)
+      })
+      .post('/api/localsend/v2/cancel', (req, res) => {
+        this.handleCancel(req, res)
+      })
+      .listen(port, _ => {
       LogUtil.info(`Listening on ${port} successfully`)
       AppStorage.set('serverOn', true)
       AppStorage.set('serverHost', NetworkUtil.getIpAddress())
-    })
-
-    this.app.get('/api/localsend/v1/info', (req, res) => {
-      this.handleInfo(req, res)
-    })
-
-    this.app.get('/api/localsend/v2/info', (req, res) => {
-      this.handleInfo(req, res)
-    })
-
-    this.app.post('/api/localsend/v2/prepare-upload', (req, res) => {
-      this.handlePreUpload(req, res)
-    })
-
-    this.app.post('/api/localsend/v2/upload', (req, res) => {
-      this.handleUpload(req, res, AppStorage.get('context') as common.Context)
-    })
-
-    this.app.post('/api/localsend/v2/register', (req, res) => {
-      this.handleRegister(req, res)
     })
   }
 
@@ -87,8 +85,8 @@ export class MyServer {
       res.end(info)
     } catch (err) {
       LogUtil.error(err)
-      res.writeHead(500)
-      res.end('Server Error')
+      res.writeHead(500, 'Internal Server Error')
+      res.end('{"message":"Internal Server Error"}')
     }
   }
 
@@ -97,7 +95,6 @@ export class MyServer {
       let postData = req.files.get('postData')
       if (postData && req.getBodySize() > 0) {
         let body: object = JSON.parse(postData.toString())
-        // this.senderName = body['info']['alias']
 
         let fileInfoMap: Record<string, string> = {}
         let fileIds = Object.keys(body['files'])
@@ -115,80 +112,106 @@ export class MyServer {
           fileListStr = fileListStr + body['files'][id]['fileName'] + '\n'
           this.fileInfo.set(id, tmp)
         })
-
+        // 构造prepare-upload需要的返回参数
+        this.sessionId = RandomUtil.generateUUID32()
+        let resBody: PreUploadResponse = {
+          files: fileInfoMap,
+          sessionId: this.sessionId
+        }
         // 弹窗使用户决定是否接收
         let sender: string = body['info']['alias']
 
-        DialogUtil.showPrimaryDialog({
-          title: `${sender} 发来以下文件：`,
-          message: `${fileListStr.trim()}`,
-          primaryButton: {
-            value: '拒绝',
-            action: () => {
-              ToastUtil.showToast('已拒绝')
-              res.writeHead(403)
-              res.end('Rejected')
-            }
-          },
-          secondaryButton: {
-            value: '接收',
-            action: () => {
-              // ToastUtil.showToast('已接受')
-              this.sessionId = RandomUtil.generateUUID32()
-              let resBody: PreUploadResponse = {
-                files: fileInfoMap,
-                sessionId: this.sessionId
+        // 处理文本类型数据
+        if (fileIds.length === 1 && body['files'][fileIds[0]]['fileType'] === 'text/plain' && body['files'][fileIds[0]]['preview'] !== '') {
+          let previewText = body['files'][fileIds[0]]['preview'] as string
+          DialogUtil.showPrimaryDialog({
+            title: `${sender} 发来以下文本：`,
+            message: previewText,
+            primaryButton: {
+              value: '关闭',
+              action: () => {
+                // ToastUtil.showToast('已拒绝')
+                res.writeHead(204, 'No Content')
+                res.end('{}')
               }
-
-              // 计算预估时间
-              let bandwidth = 10000000
-              let estimatedTime = fileTotalSize / bandwidth
-              let updateInterval = 500
-              // 保留两位小数
-              let tickTime = (updateInterval / (estimatedTime * 10))
-
-              LogUtil.info(`estimate time: ${estimatedTime}`)
-              LogUtil.info(`tick time: ${tickTime}`)
-
-              let saveProgress = 0
-              this.savingDialogId = DialogHelper.showLoadingProgress({
-                // uiContext: storage.get('uiContext'),
-                progress: saveProgress,
-                content: '保存中……',
-                loadColor: Color.White,
-                autoCancel: false,
-                backCancel: false
-              })
-
-              let intervalId = setInterval(() => {
-                if (saveProgress < 100) {
-                  saveProgress = Math.round((saveProgress + tickTime) * 10) / 10
-                  LogUtil.info(`saveProgress: ${saveProgress}`)
-                  DialogHelper.updateLoading(this.savingDialogId, undefined, saveProgress)
-                } else {
-                  clearInterval(intervalId)
-                }
-              }, updateInterval)
-              res.end(JSON.stringify(resBody))
+            },
+            secondaryButton: {
+              value: '复制',
+              action: () => {
+                // 将文本复制到剪贴板
+                PasteboardUtil.setDataText(previewText).then(() => {
+                  ToastUtil.showToast('已复制到剪贴板')
+                })
+                res.writeHead(204, 'No Content')
+                res.end('{}')
+              }
             }
-          },
-          onWillDismiss: (dismissDialogAction: DismissDialogAction) => {
-            LogUtil.error(`onWillDismiss: ${JSON.stringify(dismissDialogAction)}`)
-          }
-        })
+          })
+        } else {
+          DialogUtil.showPrimaryDialog({
+            title: `${sender} 发来以下文件：`,
+            message: `${fileListStr.trim()}`,
+            primaryButton: {
+              value: '拒绝',
+              action: () => {
+                ToastUtil.showToast('已拒绝')
+                res.writeHead(403, 'Forbidden')
+                res.end('{"message":"File request declined by recipient"}')
+              }
+            },
+            secondaryButton: {
+              value: '接收',
+              action: () => {
+                // 计算预估时间
+                let bandwidth = 10000000
+                let estimatedTime = fileTotalSize / bandwidth
+                let updateInterval = 500
+                // 保留两位小数
+                let tickTime = (updateInterval / (estimatedTime * 10))
+
+                LogUtil.info(`estimate time: ${estimatedTime}`)
+                LogUtil.info(`tick time: ${tickTime}`)
+
+                let saveProgress = 0
+                this.savingDialogId = DialogHelper.showLoadingProgress({
+                  // uiContext: storage.get('uiContext'),
+                  progress: saveProgress,
+                  content: '保存中……',
+                  loadColor: Color.White,
+                  autoCancel: false,
+                  backCancel: false
+                })
+
+                let intervalId = setInterval(() => {
+                  if (saveProgress < 100) {
+                    saveProgress = Math.round((saveProgress + tickTime) * 10) / 10
+                    LogUtil.info(`saveProgress: ${saveProgress}`)
+                    DialogHelper.updateLoading(this.savingDialogId, undefined, saveProgress)
+                  } else {
+                    clearInterval(intervalId)
+                  }
+                }, updateInterval)
+                res.end(JSON.stringify(resBody))
+              }
+            },
+            onWillDismiss: (dismissDialogAction: DismissDialogAction) => {
+              LogUtil.error(`onWillDismiss: ${JSON.stringify(dismissDialogAction)}`)
+            }
+          })
+        }
       }
     } catch (err) {
       LogUtil.error(err)
-      res.writeHead(500)
-      res.end('Server Error')
+      res.writeHead(500, 'Internal Server Error')
+      res.end('{"message":"Internal Server Error"}')
     }
   }
 
   handleUpload(req: Request, res: ServerResponse, context: Context) {
     try {
       if (!req.search) {
-        res.writeHead(403)
-        res.end('Forbidden')
+        res.writeHead(403, 'Forbidden')
+        res.end('{"message":"File request declined by recipient"}')
       } else {
         let search = new url.URLParams(req.search)
         let recvSessionId = search.get('sessionId')
@@ -199,8 +222,8 @@ export class MyServer {
 
         if (!recvSessionId || !recvFileId || !recvToken || this.fileInfo.get(recvFileId)!!.token !== recvToken ||
           this.sessionId !== recvSessionId) {
-          res.writeHead(403)
-          res.end('Forbidden')
+          res.writeHead(403, 'Forbidden')
+          res.end('{"message":"File request declined by recipient"}')
         } else {
           let postData = req.files.get('postData')
           if (postData && req.getBodySize() > 0) {
@@ -242,8 +265,6 @@ export class MyServer {
                 }
                 let writeBuf = buf.slice(bufSize * i, Math.min(fileSize, bufSize * (i + 1)))
                 await outputStream.write(writeBuf, writeOptions)
-                // saveProgress++
-                // DialogHelper.updateLoading(dialogId, undefined, saveProgress)
               }
 
               // let writeLen = fs.writeSync(outputFile.fd, postData!!.buffer)
@@ -261,16 +282,16 @@ export class MyServer {
               res.end('{}')
             }).catch((err: BusinessError) => {
               LogUtil.error(`[*] save failed, code: ${err.code}, message: ${err.message}`)
-              res.writeHead(500)
-              res.end('Server Error')
+              res.writeHead(500, 'Internal Server Error')
+              res.end('{"message":"Internal Server Error"}')
             })
           }
         }
       }
     } catch (err) {
       LogUtil.error(err)
-      res.writeHead(500)
-      res.end('Server Error')
+      res.writeHead(500, 'Internal Server Error')
+      res.end('{"message":"Internal Server Error"}')
     }
   }
 
@@ -286,6 +307,13 @@ export class MyServer {
     } catch (err) {
       LogUtil.error(err)
     }
+  }
+
+  handleCancel(req: Request, res: ServerResponse) {
+    this.sessionId = ''
+    LogUtil.error('File request declined by recipient')
+    res.writeHead(403, 'Forbidden')
+    res.end('{"message":"No permission"}')
   }
 }
 
