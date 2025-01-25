@@ -310,10 +310,14 @@ export class MyServer {
   }
 
   handleCancel(req: Request, res: ServerResponse) {
-    this.sessionId = ''
-    LogUtil.error('File request declined by recipient')
-    res.writeHead(403, 'Forbidden')
-    res.end('{"message":"No permission"}')
+    try {
+      this.sessionId = ''
+      LogUtil.error('File request declined by recipient')
+      res.writeHead(403, 'Forbidden')
+      res.end('{"message":"No permission"}')
+    } catch (err) {
+      LogUtil.error(err)
+    }
   }
 }
 
