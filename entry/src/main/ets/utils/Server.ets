@@ -44,6 +44,16 @@ export class MyServer {
     AppStorage.setOrCreate('serverPort', port)
 
     this.app
+      .use((req: Request, res: ServerResponse, next: Function) => {
+        LogUtil.info(`~> Received ${req.method} on ${req.url}`);
+        next(); // move on
+      })
+      .use((req: Request, res: ServerResponse, next: Function) => {
+        if (!req.headers['content-type']) {
+          req.headers['content-type'] = 'application/json';
+        }
+        next();
+      })
       .get('/api/localsend/v1/info', (req, res) => {
         this.handleInfo(req, res)
       })
@@ -109,7 +119,7 @@ export class MyServer {
             fileSize: body['files'][id]['size']
           }
           fileTotalSize += body['files'][id]['size']
-          fileListStr = fileListStr + body['files'][id]['fileName'] + '\n'
+          fileListStr = fileListStr + body['files'][id]['fileName'] + ' (' + FileUtil.getFormatFileSize(parseInt(body['files'][id]['size']))  + ')' + '\n'
           this.fileInfo.set(id, tmp)
         })
         // 构造prepare-upload需要的返回参数
