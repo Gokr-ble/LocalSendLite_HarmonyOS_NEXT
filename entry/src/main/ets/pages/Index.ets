@@ -62,7 +62,10 @@ struct Index {
     }, (netConnectionPropertyInfo) => {
       LogUtil.info(`网络连接信息变化: ${JSON.stringify(netConnectionPropertyInfo)}`)
       // ToastUtil.showToast('网络环境发生变化')
-      AppStorage.setOrCreate('CurrentIPAddress', NetworkUtil.getIpAddress())
+      let ip = NetworkUtil.getIpAddress()
+      if (ip === '0.0.0.0')
+        ip = '192.168.43.1'
+      AppStorage.setOrCreate('CurrentIPAddress', ip)
       // this.serverHost = NetworkUtil.getIpAddress()
     }, (netBlockStatusInfo) => {
       LogUtil.info(`网络阻塞状态: ${JSON.stringify(netBlockStatusInfo)}`)

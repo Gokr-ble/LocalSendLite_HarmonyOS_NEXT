@@ -38,11 +38,11 @@ export struct ReceiveTab {
 
   @State fileName: string = ''
   @State angle: number = 0
-  @State serverHost: string = '0.0.0.0'
+  @State serverHost: string = '192.168.43.1'
 
   @StorageLink('serverOn') serverOn: boolean = false
   @StorageLink('serverAlias') alias: string = 'Default'
-  @StorageLink('CurrentIPAddress') currentIP: string = '0.0.0.0'
+  @StorageLink('CurrentIPAddress') currentIP: string = '192.168.43.1'
 
   animControllerRef = new AnimController()
 
@@ -65,7 +65,10 @@ export struct ReceiveTab {
     AppStorage.setOrCreate('animatorOptions', animatorOptions)
     AppStorage.setOrCreate('animatorOption', animatorOption)
 
-    this.serverHost = NetworkUtil.getIpAddress()
+    let ip = NetworkUtil.getIpAddress()
+    if (ip === '0.0.0.0')
+      ip = '192.168.43.1'
+    this.serverHost = ip
     AppStorage.setOrCreate('context', getContext(this) as common.Context)
     this.server.startServer()
 

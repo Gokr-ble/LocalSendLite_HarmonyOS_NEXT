@@ -38,6 +38,8 @@ async function scanOneIp(remoteIp: string, deviceInfo: string, timeOut: number) 
  */
 export async function tcpScan(dialogId: string, scanIPRange: string = NetworkUtil.getIpAddress()) {
   let localIp = NetworkUtil.getIpAddress()
+  if (localIp === '0.0.0.0')
+    localIp = '192.168.43.1'
   let ipSeg = scanIPRange.substring(0, scanIPRange.lastIndexOf('.') + 1)
 
   let searchTime = dataPreferences.getSync('searchTimeout', 1000) as number
@@ -46,7 +48,7 @@ export async function tcpScan(dialogId: string, scanIPRange: string = NetworkUti
   let taskGroup = new taskpool.TaskGroup()
   for (let i = 0; i < 255; i++) {
     let remoteIp = ipSeg + i
-    if (remoteIp === localIp) continue
+    if (remoteIp === localIp || remoteIp === '192.168.43.1') continue
     let task: taskpool.Task = new taskpool.Task(scanOneIp, remoteIp, getDeviceInfo(), searchTime)
     taskGroup.addTask(task)
   }
@@ -55,6 +57,8 @@ export async function tcpScan(dialogId: string, scanIPRange: string = NetworkUti
     const ret = await taskpool.execute(taskGroup)
     for (let i = 0; i < (ret as Array<string>).length; i++) {
       let ip = ipSeg + i
+      if (scanIPRange.includes('192.168.43'))
+        ip = ipSeg + (i + 1)
       let rawData = (ret as Array<string>)[i]
       // LogUtil.info(`${ip}: ${rawData}`)
       if (rawData.indexOf('data') !== -1) {

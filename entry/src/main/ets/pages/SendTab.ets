@@ -43,6 +43,8 @@ export struct SendTab {
         this.fileName = uriListToFileName(this.fileUriList)
       }
     }
+    if (this.scanIPRange === '0.0.0.0')
+      this.scanIPRange = '192.168.43.1'
   }
 
   private clearFileData = () => {
