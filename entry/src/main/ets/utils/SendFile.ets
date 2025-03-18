@@ -9,7 +9,7 @@ import { getDeviceInfo } from "../model/DeviceInfo"
 import { PreUploadRequest, PreUploadResponse } from "../model/PreUploadResponse"
 import { FileInfoSent } from "../model/FileInfo"
 
-export async function sendFile(fileUriList: string[], receiverIP: string) {
+export async function sendFile(fileUriList: string[], receiverIP: string, isText: boolean = false) {
   // 检测目标是否可达
   const url = `http://${receiverIP}:53317/api/localsend/v2/info`
   try {
@@ -41,30 +41,50 @@ export async function sendFile(fileUriList: string[], receiverIP: string) {
     let fileInfoSentList: FileInfoSent[] = []
 
     // 读取文件信息
-    fileUriList.forEach((fileUri: string) => {
-      let file = fileIo.openSync(fileUri, fileIo.OpenMode.READ_ONLY)
-      let stat = fileIo.statSync(file.fd)
-      let fileId = RandomUtil.generateUUID32()
-      let fileName = decodeURI(fileUri.substring(fileUri.lastIndexOf('/') + 1, fileUri.length))
-      let fileExt = FileUtil.getFileExtention(fileName)
-      preUploadRequest.files[fileId] = {
-        id: fileId,
-        fileName: fileName,
-        size: stat.size,
-        fileType: fileExt == '' ? fileExt : 'application/octet-stream'
-      }
-      fileInfoSentList.push({
-        fileUri: fileUri,
-        fileId: fileId,
-        fileToken: ''
+    if (!isText) {
+      fileUriList.forEach((fileUri: string) => {
+        let file = fileIo.openSync(fileUri, fileIo.OpenMode.READ_ONLY)
+        let stat = fileIo.statSync(file.fd)
+        let fileId = RandomUtil.generateUUID32()
+        let fileName = decodeURI(fileUri.substring(fileUri.lastIndexOf('/') + 1, fileUri.length))
+        let fileExt = FileUtil.getFileExtention(fileName)
+        preUploadRequest.files[fileId] = {
+          id: fileId,
+          fileName: fileName,
+          size: stat.size,
+          fileType: fileExt == '' ? fileExt : 'application/octet-stream',
+          preview: ''
+        }
+        fileInfoSentList.push({
+          fileUri: fileUri,
+          fileId: fileId,
+          fileToken: ''
+        })
       })
-    })
+    } else {
+      // 纯文本发送，此时fileUriList[0]为文本内容
+      let fileId = RandomUtil.generateUUID32()
+      preUploadRequest.files[fileId] = {
+        id: RandomUtil.generateUUID32(),
+        fileName: `${RandomUtil.generateUUID32()}.txt`,
+        fileType: 'text/plain',
+        size: fileUriList[0].length,
+        preview: fileUriList[0]
+      }
+    }
 
     let preUploadUrl = `http://${receiverIP}:53317/api/localsend/v2/prepare-upload`
     try {
       let preUploadResp: AxiosResponse<PreUploadResponse> =
         await axios.post<PreUploadResponse, AxiosResponse<PreUploadResponse>, string>
         (preUploadUrl, JSON.stringify(preUploadRequest), { timeout: 3000, headers: { "Content-Type": "application/json" } })
+      //纯文本响应码204，无body
+      if (preUploadResp.status == 204) {
+        DialogHelper.closeDialog(dialogId)
+        ToastUtil.showToast(`文本发送成功`)
+        return
+      }
+
       let sessionId: string = preUploadResp.data.sessionId
       fileInfoSentList.forEach(async (fileInfo) => {
         if (preUploadResp.data.files[fileInfo.fileId]) {

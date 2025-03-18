@@ -1,18 +1,6 @@
-import polka, { IncomingMessage, Request, ServerResponse } from '@ohos/polka'
-import { CryptoJS } from '@ohos/crypto-js'
-import { picker, fileIo as fs, Environment, fileUri, ReadOptions, WriteOptions } from '@kit.CoreFileKit'
 import { common } from '@kit.AbilityKit'
-import { BusinessError } from "@kit.BasicServicesKit";
-import { url } from "@kit.ArkTS";
-import { DialogUtil, FileUtil, LogUtil, NetworkUtil, RandomUtil, ToastUtil } from "@pura/harmony-utils";
-import { preferences } from "@kit.ArkData";
-import { DialogHelper, SpinType } from '@pura/harmony-dialog';
-import { LogoIndicator } from '../utils/LogoIndicator';
-import { RegisteredDevice } from '../model/RegisteredDevice';
-import { PreUploadResponse } from '../model/PreUploadResponse';
-import { FileInfoSaved } from '../model/FileInfo';
+import { LogUtil, NetworkUtil, ToastUtil } from "@pura/harmony-utils";
 import { AnimatorOptions, AnimatorResult } from '@kit.ArkUI';
-import { getDeviceInfo } from '../model/DeviceInfo';
 import { MyServer } from '../utils/Server';
 import { getConfigPreference } from '../utils/ReadConfig';
 import { AnimController } from '../controller/AnimController';

@@ -1,11 +1,11 @@
 import { rcp } from '@kit.RemoteCommunicationKit'
 import { BusinessError } from '@kit.BasicServicesKit'
-import { pickFile } from '../utils/PickFile'
+import { pickFile, pickMedia } from '../utils/PickFile'
 import { fileIo } from '@kit.CoreFileKit'
 import { CryptoJS } from '@ohos/crypto-js'
 import { CryptoUtil, DeviceUtil, FileUtil, LogUtil, NetworkUtil, RandomUtil, ToastUtil } from '@pura/harmony-utils'
 import { preferences } from '@kit.ArkData'
-import { DialogHelper, SpinType } from '@pura/harmony-dialog'
+import { DialogAction, DialogHelper, SpinType } from '@pura/harmony-dialog'
 import { socket } from '@kit.NetworkKit'
 import { taskpool } from '@kit.ArkTS'
 import axios, { AxiosError, AxiosResponse } from '@ohos/axios'
@@ -34,6 +34,7 @@ export struct SendTab {
   @StorageLink('scanFinished') scanFinished: boolean = false;
 
   @State loadingProgressWidth: number = 0;
+  private isText = false;
 
   aboutToAppear(): void {
     if (AppStorage.has('fileUriList')) {
@@ -103,16 +104,77 @@ export struct SendTab {
           .textOverflow({ overflow: TextOverflow.MARQUEE })
       }
       .width('85%')
-      // .margin({ bottom: '16vp' })
 
-      Button('选择文件')
-        .width('90%')
-        // .margin({ bottom: '16vp' })
-        .onClick(async () => {
-          let uriList: string[] = await pickFile()
-          this.fileName = uriListToFileName(uriList)
-          this.fileUriList = uriList
-        })
+      Row({ space: 4 }) {
+        Button(){
+          Row({ space: 4 }) {
+            Image($r('app.media.file_type_media'))
+              .width(30)
+              .height(30)
+              .margin(4)
+            Text('媒体')
+              .fontColor(0xFFFFFF)
+          }
+        }
+          .width('32%')
+          .onClick(async () => {
+            this.isText = false
+            let uriList: string[] = await pickMedia()
+            this.fileName = uriListToFileName(uriList)
+            this.fileUriList = uriList
+          })
+        Button(){
+          Row({ space: 4 }) {
+            Image($r('app.media.file_type_text'))
+              .width(30)
+              .height(30)
+              .margin(4)
+            Text('文本')
+              .fontColor(0xFFFFFF)
+          }
+        }
+          .width('32%')
+          .onClick(async () => {
+            this.isText = true
+            DialogHelper.showTextAreaDialog({
+              title: '发送文本',
+              text: '',
+              onChange: (text)=>{
+                // sendText = text
+              },
+              onAction:(action, dialogId, content) => {
+                if (action == DialogAction.SURE) {
+                  // 确认发送
+                  this.fileName = content
+                  this.fileUriList = []
+                  this.fileUriList.push(content)
+                }
+              }
+            })
+            // let uriList: string[] = await pickFile()
+            // this.fileName = uriListToFileName(uriList)
+            // this.fileUriList = uriList
+          })
+        Button() {
+          Row({ space: 4 }) {
+            Image($r('app.media.file_type_file'))
+              .width(30)
+              .height(30)
+              .margin(4)
+            Text('文件')
+              .fontColor(0xFFFFFF)
+          }
+
+        }
+          .width('32%')
+          .onClick(async () => {
+            this.isText = false
+            let uriList: string[] = await pickFile()
+            this.fileName = uriListToFileName(uriList)
+            this.fileUriList = uriList
+          })
+      }
+      .width('90%')
 
       Button('发送文件')
         .width('90%')
@@ -125,7 +187,11 @@ export struct SendTab {
           } else if (!validLocalIP(this.receiverIP)) {
             ToastUtil.showToast('接收IP非法')
           } else {
-            sendFile(this.fileUriList, this.receiverIP)
+            if (this.isText) {
+              sendFile(this.fileUriList, this.receiverIP, true)
+            } else {
+              sendFile(this.fileUriList, this.receiverIP)
+            }
           }
         })
 

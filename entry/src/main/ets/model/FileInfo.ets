@@ -5,6 +5,7 @@ export interface File {
   fileName: string;
   size: number;
   fileType: string;
+  preview: string;
 }
 
 // export interface IFileMetaData {
