@@ -2,10 +2,8 @@ import { DeviceUtil, LogUtil, NetworkUtil, ToastUtil } from '@pura/harmony-utils
 import { ReceiveTab } from './ReceiveTab';
 import { SendTab } from './SendTab';
 import { SettingsTab } from './SettingsTab';
-import { preferences } from '@kit.ArkData';
 import { BusinessError } from '@kit.BasicServicesKit';
 import { getConfigPreference } from '../utils/ReadConfig';
-import { tcpScan } from '../utils/ScanLocalNetwork';
 
 let dataPreferences = getConfigPreference()
 

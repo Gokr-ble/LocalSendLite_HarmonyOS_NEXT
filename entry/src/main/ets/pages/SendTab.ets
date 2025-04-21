@@ -1,20 +1,11 @@
-import { rcp } from '@kit.RemoteCommunicationKit'
-import { BusinessError } from '@kit.BasicServicesKit'
 import { pickFile, pickMedia } from '../utils/PickFile'
-import { fileIo } from '@kit.CoreFileKit'
-import { CryptoJS } from '@ohos/crypto-js'
-import { CryptoUtil, DeviceUtil, FileUtil, LogUtil, NetworkUtil, RandomUtil, ToastUtil } from '@pura/harmony-utils'
-import { preferences } from '@kit.ArkData'
-import { DialogAction, DialogHelper, SpinType } from '@pura/harmony-dialog'
-import { socket } from '@kit.NetworkKit'
-import { taskpool } from '@kit.ArkTS'
-import axios, { AxiosError, AxiosResponse } from '@ohos/axios'
+import { LogUtil, NetworkUtil, ToastUtil } from '@pura/harmony-utils'
+import { DialogAction, DialogHelper } from '@pura/harmony-dialog'
 import { curves } from '@kit.ArkUI'
-import { continuationManager } from '@kit.AbilityKit'
 import { tcpScan } from '../utils/ScanLocalNetwork'
 import { getConfigPreference } from '../utils/ReadConfig'
 import { sendFile } from '../utils/SendFile'
-import { ShareController } from '../controller/ShareController'
+
 
 let dataPreferences = getConfigPreference()
 
@@ -36,7 +27,7 @@ export struct SendTab {
   @State loadingProgressWidth: number = 0;
   private isText = false;
 
-  aboutToAppear(): void {
+  async aboutToAppear(): Promise<void> {
     if (AppStorage.has('fileUriList')) {
       this.clearFileData()
       this.fileUriList = AppStorage.get('fileUriList') || []
@@ -46,6 +37,16 @@ export struct SendTab {
     }
     if (this.scanIPRange === '0.0.0.0')
       this.scanIPRange = '192.168.43.1'
+
+    if (!validLocalIP(this.scanIPRange)) {
+      ToastUtil.showToast('扫描IP段非法')
+    } else {
+      this.changeLoadingStatus()
+      tcpScan('', this.scanIPRange).then(() => {
+        LogUtil.info('初始化扫描完成')
+      })
+      this.changeLoadingStatus()
+    }
   }
 
   private clearFileData = () => {
@@ -194,6 +195,12 @@ export struct SendTab {
             }
           }
         })
+
+      // Button('测试UDP广播')
+      //   .width('90%')
+      //   .onClick(() => {
+      //     UDPBroadcast()
+      //   })
 
       Text('请确保目标连接的是同一个Wi-Fi网络')
         .width('90%')

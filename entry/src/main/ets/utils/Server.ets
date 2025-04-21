@@ -6,7 +6,7 @@ import { common } from '@kit.AbilityKit'
 import { getDeviceInfo } from '../model/DeviceInfo'
 import { PreUploadResponse } from '../model/PreUploadResponse'
 import { DialogHelper } from '@pura/harmony-dialog'
-import { url } from '@kit.ArkTS'
+import { url, util } from '@kit.ArkTS'
 import { fileUri, picker, fileIo as fs, WriteOptions } from '@kit.CoreFileKit'
 import { BusinessError } from '@kit.BasicServicesKit'
 import { RegisteredDevice } from '../model/RegisteredDevice'
@@ -244,7 +244,7 @@ export class MyServer {
             documentSaveOptions.pickerMode = picker.DocumentPickerMode.DOWNLOAD
             documentViewPicker.save(documentSaveOptions).then(async (documentSaveResult: Array<string>) => {
               // 添加重复文件判断
-              uri = documentSaveResult[0] + '/' + fileName
+              uri = documentSaveResult[0] + '/' + encodeURIComponent(fileName)
               if (await FileUtil.access(FileUtil.getFilePath(uri))) {
                 let date = new Date()
                 let dateString =
