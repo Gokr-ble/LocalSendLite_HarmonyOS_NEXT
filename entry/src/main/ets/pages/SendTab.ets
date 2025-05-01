@@ -23,7 +23,6 @@ export struct SendTab {
   @StorageLink('scanIPRange') scanIPRange: string = NetworkUtil.getIpAddress()
   @StorageLink('deviceList') localDevices: Array<string> = []
   @StorageLink('scanFinished') scanFinished: boolean = false;
-
   @State loadingProgressWidth: number = 0;
   private isText = false;
 
@@ -35,8 +34,9 @@ export struct SendTab {
         this.fileName = uriListToFileName(this.fileUriList)
       }
     }
-    if (this.scanIPRange === '0.0.0.0')
+    if (this.scanIPRange === '0.0.0.0') {
       this.scanIPRange = '192.168.43.1'
+    }
 
     if (!validLocalIP(this.scanIPRange)) {
       ToastUtil.showToast('扫描IP段非法')
@@ -53,14 +53,12 @@ export struct SendTab {
     this.fileName = '未选择'
     this.fileUriList = []
   }
-
   private setFileData = (uriList: string[]) => {
     if (uriList.length > 0) {
       this.fileUriList = uriList
       this.fileName = uriListToFileName(this.fileUriList)
     }
   }
-
   private parseDeviceTypeImage = (deviceType: string) => {
     let result = $r('app.media.device_type_unknown')
     if (deviceType === 'desktop') {
@@ -70,7 +68,6 @@ export struct SendTab {
     }
     return result
   }
-
   private changeLoadingStatus = () => {
     this.loadingProgressWidth = this.loadingProgressWidth === 0 ? 24 : 0
   }
@@ -89,6 +86,7 @@ export struct SendTab {
           })
       }
       .width('85%')
+
       // .margin({ bottom: '16vp' })
 
       Row() {
@@ -107,79 +105,82 @@ export struct SendTab {
       .width('85%')
 
       Row({ space: 4 }) {
-        Button(){
-          Row({ space: 4 }) {
-            Image($r('app.media.file_type_media'))
-              .width(30)
-              .height(30)
-              .margin(4)
-            Text('媒体')
-              .fontColor(0xFFFFFF)
-          }
-        }
-          .width('32%')
-          .onClick(async () => {
-            this.isText = false
-            let uriList: string[] = await pickMedia()
-            this.fileName = uriListToFileName(uriList)
-            this.fileUriList = uriList
-          })
-        Button(){
-          Row({ space: 4 }) {
-            Image($r('app.media.file_type_text'))
-              .width(30)
-              .height(30)
-              .margin(4)
-            Text('文本')
-              .fontColor(0xFFFFFF)
-          }
-        }
-          .width('32%')
-          .onClick(async () => {
-            this.isText = true
-            DialogHelper.showTextAreaDialog({
-              title: '发送文本',
-              text: '',
-              onChange: (text)=>{
-                // sendText = text
-              },
-              onAction:(action, dialogId, content) => {
-                if (action == DialogAction.SURE) {
-                  // 确认发送
-                  this.fileName = content
-                  this.fileUriList = []
-                  this.fileUriList.push(content)
-                }
-              }
-            })
-            // let uriList: string[] = await pickFile()
-            // this.fileName = uriListToFileName(uriList)
-            // this.fileUriList = uriList
-          })
         Button() {
           Row({ space: 4 }) {
-            Image($r('app.media.file_type_file'))
-              .width(30)
-              .height(30)
-              .margin(4)
-            Text('文件')
-              .fontColor(0xFFFFFF)
+            SymbolGlyph($r('sys.symbol.picture_fill'))
+              .renderingStrategy(SymbolRenderingStrategy.SINGLE)
+              .fontColor([Color.White, Color.Gray, Color.Black])
+              .fontSize(20)
+            Text('媒体')
+              .fontSize(16)
+              .fontColor(Color.White)
           }
-
         }
-          .width('32%')
-          .onClick(async () => {
-            this.isText = false
-            let uriList: string[] = await pickFile()
-            this.fileName = uriListToFileName(uriList)
-            this.fileUriList = uriList
+        .height(36)
+        .width('32%')
+        .onClick(async () => {
+          this.isText = false
+          let uriList: string[] = await pickMedia()
+          this.fileName = uriListToFileName(uriList)
+          this.fileUriList = uriList
+        })
+
+        Button() {
+          Row({ space: 4 }) {
+            SymbolGlyph($r('sys.symbol.textstyle'))
+              .renderingStrategy(SymbolRenderingStrategy.SINGLE)
+              .fontColor([Color.White, Color.Gray, Color.Black])
+              .fontSize(20)
+            Text('文本')
+              .fontSize(16)
+              .fontColor(Color.White)
+          }
+        }
+        .height(36)
+        .width('32%')
+        .onClick(async () => {
+          this.isText = true
+          DialogHelper.showTextAreaDialog({
+            title: '发送文本',
+            text: '',
+            onChange: (text) => {
+              // sendText = text
+            },
+            onAction: (action, dialogId, content) => {
+              if (action == DialogAction.SURE) {
+                // 确认发送
+                this.fileName = content
+                this.fileUriList = []
+                this.fileUriList.push(content)
+              }
+            }
           })
+        })
+
+        Button() {
+          Row({ space: 4 }) {
+            SymbolGlyph($r('sys.symbol.arrow_right_folder_circle'))
+              .renderingStrategy(SymbolRenderingStrategy.SINGLE)
+              .fontColor([Color.White, Color.Gray, Color.Black])
+              .fontSize(20)
+            Text('媒体')
+              .fontSize(16)
+              .fontColor(Color.White)
+          }
+        }
+        .height(36)
+        .width('32%')
+        .onClick(async () => {
+          this.isText = false
+          let uriList: string[] = await pickFile()
+          this.fileName = uriListToFileName(uriList)
+          this.fileUriList = uriList
+        })
       }
       .width('90%')
 
       Button('发送文件')
         .width('90%')
-        // .margin({ bottom: '16vp' })
         .onClick(async () => {
           if (this.fileUriList.length === 0) {
             ToastUtil.showToast("请选择文件")
@@ -203,12 +204,10 @@ export struct SendTab {
       //   })
 
       Text('请确保目标连接的是同一个Wi-Fi网络')
-        .width('90%')
-        // .margin({ bottom: '8vp' })
+        .width('90%')// .margin({ bottom: '8vp' })
         .textAlign(TextAlign.Center)
       Text(`当前扫描范围：${this.scanIPRange}`)
-        .width('90%')
-        // .margin({ bottom: '16vp' })
+        .width('90%')// .margin({ bottom: '16vp' })
         .textAlign(TextAlign.Center)
 
       Row({ space: 4 }) {
@@ -224,7 +223,7 @@ export struct SendTab {
               .animation({ duration: 1000, curve: Curve.Ease })
               .height(24)
               .color(0xFFFFFF)
-              // .enableLoading(!this.scanFinished)
+            // .enableLoading(!this.scanFinished)
             Text('扫描本地网络')
               .margin({ left: '4vp', right: '4vp' })
               .fontColor(0xFFFFFF)
