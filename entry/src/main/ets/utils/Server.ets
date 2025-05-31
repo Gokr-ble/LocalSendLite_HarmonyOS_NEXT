@@ -12,6 +12,7 @@ import { BusinessError } from '@kit.BasicServicesKit'
 import { RegisteredDevice } from '../model/RegisteredDevice'
 import { AnimatorResult } from '@kit.ArkUI'
 import { AnimController } from '../controller/AnimController'
+import { UDPBroadcast } from './UDPBroadcast'
 
 export class MyServer {
   app = polka()
@@ -45,7 +46,7 @@ export class MyServer {
 
     this.app
       .use((req: Request, res: ServerResponse, next: Function) => {
-        LogUtil.info(`~> Received ${req.method} on ${req.url}`);
+        LogUtil.info(`~> Received ${req.method} on ${req.url} from ${req.getRemoteIpAddress()}`);
         next(); // move on
       })
       .use((req: Request, res: ServerResponse, next: Function) => {
@@ -77,6 +78,9 @@ export class MyServer {
       AppStorage.set('serverOn', true)
       AppStorage.set('serverHost', NetworkUtil.getIpAddress())
     })
+
+    // 发送UDP广播
+    UDPBroadcast();
   }
 
   stopServer() {

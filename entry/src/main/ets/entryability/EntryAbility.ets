@@ -2,7 +2,7 @@ import { AbilityConstant, ConfigurationConstant, UIAbility, Want } from '@kit.Ab
 import { hilog } from '@kit.PerformanceAnalysisKit';
 import { window } from '@kit.ArkUI';
 import { AppUtil, LogUtil } from '@pura/harmony-utils';
-import { DialogHelper, Orientation } from '@pura/harmony-dialog';
+import { DialogHelper } from '@pura/harmony-dialog';
 import { systemShare } from '@kit.ShareKit';
 import { BusinessError } from '@kit.BasicServicesKit';
 
@@ -26,7 +26,7 @@ export default class EntryAbility extends UIAbility {
           let fileUriList: string[] = []
           data.getRecords().forEach((record: systemShare.SharedRecord) => {
             // 处理分享数据
-            LogUtil.info(`SharedRecord:${record.uri}`)
+            LogUtil.info(`SharedRecord: ${record.uri}`)
             if (record.uri) {
               fileUriList.push(record.uri)
             }

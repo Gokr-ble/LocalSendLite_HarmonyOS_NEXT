@@ -1,10 +1,8 @@
 import axios, { AxiosResponse } from "@ohos/axios"
-import { DialogHelper, SpinType } from "@pura/harmony-dialog"
-import { DeviceUtil, FileUtil, LogUtil, RandomUtil, ToastUtil } from "@pura/harmony-utils"
+import { DialogHelper } from "@pura/harmony-dialog"
+import { FileUtil, LogUtil, RandomUtil, ToastUtil } from "@pura/harmony-utils"
 import { RegisteredDevice } from "../model/RegisteredDevice"
 import { fileIo } from "@kit.CoreFileKit"
-import { preferences } from "@kit.ArkData"
-import { getConfigPreference } from "./ReadConfig"
 import { getDeviceInfo } from "../model/DeviceInfo"
 import { PreUploadRequest, PreUploadResponse } from "../model/PreUploadResponse"
 import { FileInfoSent } from "../model/FileInfo"
@@ -97,12 +95,13 @@ export async function sendFile(fileUriList: string[], receiverIP: string, isText
             let uploadUrl = `http://${receiverIP}:53317/api/localsend/v2/upload?sessionId=${sessionId}&fileId=${fileInfo.fileId}&token=${fileInfo.fileToken}`
             try {
               let uploadResp: AxiosResponse<string> =
-                await axios.post<string, AxiosResponse<string>, ArrayBuffer>(uploadUrl, readBuff, { timeout: 3000 })
+                await axios.post<string, AxiosResponse<string>, ArrayBuffer>(uploadUrl, readBuff, { timeout: 600000 })
               if (uploadResp.status == 200) {
-                LogUtil.info(`upload succeed: [${response.status}] ${response.data}`)
+                LogUtil.info(`upload succeed with status code [${response.status}]`)
+                ToastUtil.showToast(`发送成功，共发送${fileInfoSentList.length}个文件`)
                 // ToastUtil.showToast('发送成功')
               } else {
-                LogUtil.error(`upload failed: [${response.status}] ${response.data}`)
+                LogUtil.error(`upload failed with status code [${response.status}]`)
                 // ToastUtil.showToast('发送失败')
               }
             } catch (error) {
@@ -113,7 +112,6 @@ export async function sendFile(fileUriList: string[], receiverIP: string, isText
           }
         }
       })
-      ToastUtil.showToast(`发送成功，共发送${fileInfoSentList.length}个文件`)
     } catch (error) {
       if (axios.isAxiosError(error)) {
         LogUtil.error(`pre-upload Error: ${error.message}`)
